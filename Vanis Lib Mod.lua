@@ -704,66 +704,65 @@ function library:CreateWindow(name, version, icon)
 				return UpdateLabel2
 			end
             
+            
             function pagebuttons:CreateDropdown(info)
-				local Name = info.Name or "Dropdown"
-				local Options = info.Options or {}
-				local Default = info.Default or Options[1]
-				local Callback = info.Callback or function() end
+    local Name = info.Name or "Dropdown"
+    local Options = info.Options or {}
+    local Default = info.Default or Options[1]
+    local Callback = info.Callback or function() end
 
-				-- Frame tổng
-				local Dropdown = Instance.new("Frame")
-				Dropdown.Name = Name
-				Dropdown.Size = UDim2.new(1, 0, 0, 60)
-				Dropdown.BackgroundTransparency = 1
-				Dropdown.Parent = self.Section
+    -- Frame tổng
+    local Dropdown = Instance.new("Frame")
+    Dropdown.Name = Name
+    Dropdown.Size = UDim2.new(1, 0, 0, 60)
+    Dropdown.BackgroundTransparency = 1
+    Dropdown.Parent = self.Section
 
     -- Label tên
-				local Title = Instance.new("TextLabel")
-				Title.Name = "Title"
-				Title.Size = UDim2.new(1, -10, 0, 20)
-				Title.Position = UDim2.new(0, 10, 0, 0)
-				Title.BackgroundTransparency = 1
-				Title.Text = Name
-				Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-				Title.Font = Enum.Font.GothamSemibold
-				Title.TextSize = 14
-				Title.TextXAlignment = Enum.TextXAlignment.Left
-				Title.Parent = Dropdown
+    local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.Size = UDim2.new(1, -10, 0, 20)
+    Title.Position = UDim2.new(0, 10, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = Name
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = Enum.Font.GothamSemibold
+    Title.TextSize = 14
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = Dropdown
 
     -- Nút chính
-				local MainButton = Instance.new("TextButton")
-				MainButton.Name = "MainButton"
-				MainButton.Size = UDim2.new(1, -20, 0, 28)
-				MainButton.Position = UDim2.new(0, 10, 0, 25)
-				MainButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-				MainButton.BorderSizePixel = 0
-				MainButton.Text = tostring(Default)
-				MainButton.Font = Enum.Font.Gotham
-				MainButton.TextSize = 14
-				MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-				MainButton.Parent = Dropdown
+    local MainButton = Instance.new("TextButton")
+    MainButton.Name = "MainButton"
+    MainButton.Size = UDim2.new(1, -20, 0, 28)
+    MainButton.Position = UDim2.new(0, 10, 0, 25)
+    MainButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    MainButton.BorderSizePixel = 0
+    MainButton.Text = tostring(Default)
+    MainButton.Font = Enum.Font.Gotham
+    MainButton.TextSize = 14
+    MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MainButton.Parent = Dropdown
 
-				-- Danh sách
-				local ListFrame = Instance.new("Frame")
-				ListFrame.Name = "List"
-				ListFrame.Size = UDim2.new(1, -20, 0, 0) -- đóng mặc định
-				ListFrame.Position = UDim2.new(0, 10, 0, 54)
-				ListFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-				ListFrame.BorderSizePixel = 0
-				ListFrame.Visible = false
-				ListFrame.ClipsDescendants = true
-				ListFrame.Parent = Dropdown
+    -- Danh sách
+    local ListFrame = Instance.new("Frame")
+    ListFrame.Name = "List"
+    ListFrame.Size = UDim2.new(1, -20, 0, 0)
+    ListFrame.Position = UDim2.new(0, 10, 0, 54)
+    ListFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    ListFrame.BorderSizePixel = 0
+    ListFrame.Visible = false
+    ListFrame.ClipsDescendants = true
+    ListFrame.Parent = Dropdown
 
-				local UIListLayout = Instance.new("UIListLayout")
-				UIListLayout.Parent = ListFrame
-				UIListLayout.Padding = UDim.new(0, 2)
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Parent = ListFrame
+    UIListLayout.Padding = UDim.new(0, 2)
 
-				-- Tạo option items
+    -- Tạo option items
     local function RefreshOptions()
         for _, v in pairs(ListFrame:GetChildren()) do
-            if v:IsA("TextButton") then
-                v:Destroy()
-            end
+            if v:IsA("TextButton") then v:Destroy() end
         end
 
         for _, option in ipairs(Options) do
@@ -782,9 +781,8 @@ function library:CreateWindow(name, version, icon)
                 MainButton.Text = tostring(option)
                 Callback(option)
 
-                -- đóng dropdown
                 ListFrame.Visible = false
-                ListFrame.Size = UDim2.new(1, -20, 0, 0)
+                ListFrame:TweenSize(UDim2.new(1, -20, 0, 0), "Out", "Quad", 0.15, true)
             end)
         end
     end
@@ -798,14 +796,14 @@ function library:CreateWindow(name, version, icon)
 
         if isOpen then
             ListFrame.Visible = true
-            ListFrame.Size = UDim2.new(1, -20, 0, (#Options * 27))
+            ListFrame:TweenSize(UDim2.new(1, -20, 0, (#Options * 27)), "Out", "Quad", 0.15, true)
         else
+            ListFrame:TweenSize(UDim2.new(1, -20, 0, 0), "Out", "Quad", 0.15, true)
+            task.wait(0.15)
             ListFrame.Visible = false
-            ListFrame.Size = UDim2.new(1, -20, 0, 0)
         end
     end)
 
-    -- callback default
     Callback(Default)
 
     return {
