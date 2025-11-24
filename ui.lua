@@ -780,101 +780,105 @@ function UI.CreateWindow(config)
 
                 local DropdownFrame = Instance.new("Frame")
                 DropdownFrame.Name = name
-                DropdownFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+                DropdownFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
                 DropdownFrame.BorderSizePixel = 0
-                DropdownFrame.Size = UDim2.new(1, 0, 0, 40)
+                DropdownFrame.Size = UDim2.new(1, 0, 0, 38)
+                DropdownFrame.ClipsDescendants = true
                 DropdownFrame.Parent = SectionContainer
 
                 local DropdownCorner = Instance.new("UICorner")
-                DropdownCorner.CornerRadius = UDim.new(0, 10)
+                DropdownCorner.CornerRadius = UDim.new(0, 8)
                 DropdownCorner.Parent = DropdownFrame
 
                 local DropdownButton = Instance.new("TextButton")
                 DropdownButton.BackgroundTransparency = 1
-                DropdownButton.Size = UDim2.new(1, 0, 1, 0)
+                DropdownButton.Size = UDim2.new(1, 0, 0, 38)
                 DropdownButton.Text = ""
                 DropdownButton.Parent = DropdownFrame
 
                 local DropdownLabel = Instance.new("TextLabel")
                 DropdownLabel.BackgroundTransparency = 1
                 DropdownLabel.Position = UDim2.new(0, 12, 0, 0)
-                DropdownLabel.Size = UDim2.new(1, -45, 1, 0)
-                DropdownLabel.Font = Enum.Font.Gotham
-                DropdownLabel.Text = currentItem
+                DropdownLabel.Size = UDim2.new(1, -35, 1, 0)
+                DropdownLabel.Font = Enum.Font.GothamSemibold
+                DropdownLabel.Text = (options.Text or name) .. ": " .. currentItem
                 DropdownLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
-                DropdownLabel.TextSize = 12
+                DropdownLabel.TextSize = 13
                 DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
-                DropdownLabel.Parent = DropdownFrame
+                DropdownLabel.Parent = DropdownButton
 
                 local DropdownArrow = Instance.new("TextLabel")
                 DropdownArrow.BackgroundTransparency = 1
-                DropdownArrow.Position = UDim2.new(1, -30, 0, 0)
-                DropdownArrow.Size = UDim2.new(0, 30, 1, 0)
+                DropdownArrow.Position = UDim2.new(1, -28, 0, 0)
+                DropdownArrow.Size = UDim2.new(0, 20, 1, 0)
                 DropdownArrow.Font = Enum.Font.GothamBold
                 DropdownArrow.Text = "▼"
-                DropdownArrow.TextColor3 = ThemeColor
+                DropdownArrow.TextColor3 = Color3.fromRGB(180, 180, 180)
                 DropdownArrow.TextSize = 11
-                DropdownArrow.Parent = DropdownFrame
+                DropdownArrow.Parent = DropdownButton
 
                 local ItemContainer = Instance.new("Frame")
                 ItemContainer.BackgroundTransparency = 1
-                ItemContainer.BorderSizePixel = 0
-                ItemContainer.Position = UDim2.new(0, 0, 1, 0)
+                ItemContainer.Position = UDim2.new(0, 0, 0, 38)
                 ItemContainer.Size = UDim2.new(1, 0, 0, 0)
-                ItemContainer.Visible = false
                 ItemContainer.Parent = DropdownFrame
 
-                local itemCount = #items
+                local ItemList = Instance.new("UIListLayout")
+                ItemList.Parent = ItemContainer
+                ItemList.SortOrder = Enum.SortOrder.LayoutOrder
+
                 local isOpen = false
 
-                DropdownButton.MouseButton1Click:Connect(function()
-                    isOpen = not isOpen
+                local function UpdateDropdown()
                     if isOpen then
-                        ItemContainer.Visible = true
-                        ItemContainer.Size = UDim2.new(1, 0, 0, 38 + (itemCount * 35))
+                        local itemCount = #items
+                        TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {
+                            Size = UDim2.new(1, 0, 0, 38 + (itemCount * 32))
+                        }):Play()
+                        TweenService:Create(DropdownArrow, TweenInfo.new(0.2), {
+                            Rotation = 180
+                        }):Play()
                     else
-                        ItemContainer.Size = UDim2.new(1, 0, 0, 0)
-                        ItemContainer.Visible = false
+                        TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {
+                            Size = UDim2.new(1, 0, 0, 38)
+                        }):Play()
+                        TweenService:Create(DropdownArrow, TweenInfo.new(0.2), {
+                            Rotation = 0
+                        }):Play()
                     end
-                end)
+                end
 
-                for i, item in ipairs(items) do
+                for _, item in ipairs(items) do
                     local ItemButton = Instance.new("TextButton")
-                    ItemButton.Name = item
-                    ItemButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                    ItemButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
                     ItemButton.BorderSizePixel = 0
-                    ItemButton.Position = UDim2.new(0, 0, 0, 35 + (i-1) * 35)
-                    ItemButton.Size = UDim2.new(1, 0, 0, 35)
+                    ItemButton.Size = UDim2.new(1, 0, 0, 32)
                     ItemButton.Font = Enum.Font.Gotham
                     ItemButton.Text = item
                     ItemButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-                    ItemButton.TextSize = 11
+                    ItemButton.TextSize = 12
                     ItemButton.Parent = ItemContainer
 
                     ItemButton.MouseButton1Click:Connect(function()
                         currentItem = item
-                        DropdownLabel.Text = item
+                        DropdownLabel.Text = (options.Text or name) .. ": " .. currentItem
                         isOpen = false
-                        ItemContainer.Size = UDim2.new(1, 0, 0, 0)
-                        ItemContainer.Visible = false
+                        UpdateDropdown()
                         if options.Callback then
-                            options.Callback(item)
+                            options.Callback(currentItem)
                         end
                     end)
-
-                    ItemButton.MouseEnter:Connect(function()
-                        TweenService:Create(ItemButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
-                    end)
-
-                    ItemButton.MouseLeave:Connect(function()
-                        TweenService:Create(ItemButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
-                    end)
                 end
+
+                DropdownButton.MouseButton1Click:Connect(function()
+                    isOpen = not isOpen
+                    UpdateDropdown()
+                end)
 
                 return {
                     SetValue = function(self, value)
                         currentItem = value
-                        DropdownLabel.Text = value
+                        DropdownLabel.Text = (options.Text or name) .. ": " .. currentItem
                     end,
                     GetValue = function(self)
                         return currentItem
