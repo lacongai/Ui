@@ -427,7 +427,7 @@ function UI.CreateWindow(config)
             for _, tab in pairs(Window.Tabs) do
                 tab.Content.Visible = false
                 tab.Button:FindFirstChild("Background").Size = UDim2.new(0, 0, 0, 3)
-                tab.Button:FindFirstChild("Icon").ImageColor3 = Color3.fromRGB(200, 200, 200)
+                tab.Button:FindFirstChild("Icon").ImageColor3 = Color3.fromRGB(0, 200, 0)
             end
 
             TabContent.Visible = true
@@ -856,7 +856,7 @@ function UI.CreateWindow(config)
                     ItemButton.Font = Enum.Font.Gotham
                     ItemButton.Text = item
                     ItemButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-                    ItemButton.TextSize = 12
+                    ItemButton.TextSize = 10
                     ItemButton.Parent = ItemContainer
 
                     ItemButton.MouseButton1Click:Connect(function()
