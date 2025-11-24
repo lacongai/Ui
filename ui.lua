@@ -220,19 +220,6 @@ function UI.CreateWindow(config)
     SearchCorner.CornerRadius = UDim.new(0, 8)
     SearchCorner.Parent = SearchContainer
 
-    local SearchBox = Instance.new("TextBox")
-    SearchBox.Name = "SearchBox"
-    SearchBox.BackgroundTransparency = 1
-    SearchBox.Position = UDim2.new(0, 10, 0, 0)
-    SearchBox.Size = UDim2.new(1, -30, 1, 0)
-    SearchBox.Font = Enum.Font.Gotham
-    SearchBox.Text = ""
-    SearchBox.PlaceholderText = "🔍 Tìm kiếm chức năng..."
-    SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SearchBox.TextSize = 12
-    SearchBox.ClearTextOnFocus = false
-    SearchBox.Parent = SearchContainer
-
     -- Tab Container
     local TabContainer = Instance.new("Frame")
     TabContainer.Name = "TabContainer"
@@ -360,7 +347,6 @@ function UI.CreateWindow(config)
         MainFrame = MainFrame,
         TabContainer = TabContainer,
         ContentContainer = ContentContainer,
-        SearchBox = SearchBox,
         Tabs = {},
         CurrentTab = nil,
         ThemeColor = ThemeColor
@@ -505,56 +491,58 @@ function UI.CreateWindow(config)
 
             function Section:AddToggle(name, options)
                 options = options or {}
-                local toggled = options.Default or false
                 local ToggleFrame = Instance.new("Frame")
                 ToggleFrame.Name = name
-                ToggleFrame.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+                ToggleFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
                 ToggleFrame.BorderSizePixel = 0
-                ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
+                ToggleFrame.Size = UDim2.new(1, 0, 0, 38)
                 ToggleFrame.Parent = SectionContainer
 
                 local ToggleCorner = Instance.new("UICorner")
-                ToggleCorner.CornerRadius = UDim.new(0, 10)
+                ToggleCorner.CornerRadius = UDim.new(0, 8)
                 ToggleCorner.Parent = ToggleFrame
 
                 local ToggleLabel = Instance.new("TextLabel")
                 ToggleLabel.BackgroundTransparency = 1
                 ToggleLabel.Position = UDim2.new(0, 12, 0, 0)
-                ToggleLabel.Size = UDim2.new(1, -60, 1, 0)
-                ToggleLabel.Font = Enum.Font.Gotham
+                ToggleLabel.Size = UDim2.new(1, -55, 1, 0)
+                ToggleLabel.Font = Enum.Font.GothamSemibold
                 ToggleLabel.Text = options.Text or name
-                ToggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                ToggleLabel.TextSize = 12
+                ToggleLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+                ToggleLabel.TextSize = 13
                 ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
                 ToggleLabel.Parent = ToggleFrame
 
-                local ToggleButton = Instance.new("Frame")
+                local ToggleButton = Instance.new("TextButton")
                 ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
                 ToggleButton.BorderSizePixel = 0
-                ToggleButton.Position = UDim2.new(1, -50, 0.5, -11)
-                ToggleButton.Size = UDim2.new(0, 40, 0, 22)
+                ToggleButton.Position = UDim2.new(1, -40, 0.5, -11)
+                ToggleButton.Size = UDim2.new(0, 38, 0, 22)
+                ToggleButton.Text = ""
                 ToggleButton.Parent = ToggleFrame
 
-                local ToggleButtonCorner = Instance.new("UICorner")
-                ToggleButtonCorner.CornerRadius = UDim.new(1, 0)
-                ToggleButtonCorner.Parent = ToggleButton
+                local ButtonCorner = Instance.new("UICorner")
+                ButtonCorner.CornerRadius = UDim.new(1, 0)
+                ButtonCorner.Parent = ToggleButton
 
                 local Indicator = Instance.new("Frame")
-                Indicator.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                Indicator.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
                 Indicator.BorderSizePixel = 0
                 Indicator.Position = UDim2.new(0, 2, 0.5, -8)
-                Indicator.Size = UDim2.new(0, 18, 0, 18)
+                Indicator.Size = UDim2.new(0, 16, 0, 16)
                 Indicator.Parent = ToggleButton
 
-                local IndicatorCorner = Instance.new("UICorner")
-                IndicatorCorner.CornerRadius = UDim.new(1, 0)
-                IndicatorCorner.Parent = Indicator
+                local IndCorner = Instance.new("UICorner")
+                IndCorner.CornerRadius = UDim.new(1, 0)
+                IndCorner.Parent = Indicator
+
+                local toggled = options.Default or false
 
                 local function UpdateToggle(state)
                     toggled = state
                     if toggled then
                         TweenService:Create(Indicator, TweenInfo.new(0.2), {
-                            Position = UDim2.new(1, -20, 0.5, -8),
+                            Position = UDim2.new(1, -18, 0.5, -8),
                             BackgroundColor3 = ThemeColor
                         }):Play()
                         TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
@@ -563,7 +551,7 @@ function UI.CreateWindow(config)
                     else
                         TweenService:Create(Indicator, TweenInfo.new(0.2), {
                             Position = UDim2.new(0, 2, 0.5, -8),
-                            BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+                            BackgroundColor3 = Color3.fromRGB(180, 180, 180)
                         }):Play()
                         TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
                             BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -574,10 +562,8 @@ function UI.CreateWindow(config)
                     end
                 end
 
-                ToggleFrame.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        UpdateToggle(not toggled)
-                    end
+                ToggleButton.MouseButton1Click:Connect(function()
+                    UpdateToggle(not toggled)
                 end)
 
                 UpdateToggle(toggled)
