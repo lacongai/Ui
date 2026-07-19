@@ -52,20 +52,6 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 --======================================================
 -- TIỆN ÍCH
 --======================================================
-local Themes = {
-	Dark    = Color3.fromRGB(100, 150, 255),
-	Red     = Color3.fromRGB(255, 80, 80),
-	Green   = Color3.fromRGB(80, 255, 120),
-	Blue    = Color3.fromRGB(80, 180, 255),
-	Purple  = Color3.fromRGB(180, 100, 255),
-	Pink    = Color3.fromRGB(255, 120, 180),
-	Orange  = Color3.fromRGB(255, 150, 80),
-	Yellow  = Color3.fromRGB(255, 220, 80),
-	Cyan    = Color3.fromRGB(80, 220, 255),
-	Magenta = Color3.fromRGB(255, 80, 200),
-}
-
-
 local function tween(obj, props, time, style, dir)
 	local info = TweenInfo.new(time or 0.2, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out)
 	local t = TweenService:Create(obj, info, props)
@@ -153,8 +139,7 @@ function GUILib.new(config)
 	self.Title = config.Title or "Floating GUI"
 	self.Width = config.Width or 350
 	self.Height = config.Height or 300
-	local theme = config.Theme or "Dark"
-	local ThemeColor = config.ThemeColor or Themes.Dark
+	self.ThemeColor = config.ThemeColor or Color3.fromRGB(26, 26, 34)
 	self.AccentColor = config.AccentColor or Color3.fromRGB(105, 130, 255)
 	self.TextColor = config.TextColor or Color3.fromRGB(235, 235, 240)
 	self.Resizable = (config.Resizable == nil) and true or config.Resizable
@@ -359,7 +344,7 @@ function GUILib:_Build()
 	tabBar.Name = "TabBar"
 	tabBar.Size = UDim2.new(0, 92, 1, -38)
 	tabBar.Position = UDim2.new(0, 0, 0, 38)
-	tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.35)
+	tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.22)
 	tabBar.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
 	tabBar.BorderSizePixel = 0
 	tabBar.Parent = main
@@ -469,7 +454,7 @@ end
 -- API: ĐỔI MÀU / KÍCH THƯỚC BẰNG SCRIPT (giữ nguyên gốc)
 --======================================================
 function GUILib:SetThemeColor(color)
-	ThemeColor = color
+	self.ThemeColor = color
 	local T = self.GlassTransparency
 
 	tween(self.MainFrame, {BackgroundColor3 = color}, 0.2)
