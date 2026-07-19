@@ -154,7 +154,7 @@ function GUILib.new(config)
 	self.Width = config.Width or 350
 	self.Height = config.Height or 300
 	local theme = config.Theme or "Dark"
-	self.ThemeColor = config.ThemeColor or Themes.Dark
+	local ThemeColor = config.ThemeColor or Themes.Dark
 	self.AccentColor = config.AccentColor or Color3.fromRGB(105, 130, 255)
 	self.TextColor = config.TextColor or Color3.fromRGB(235, 235, 240)
 	self.Resizable = (config.Resizable == nil) and true or config.Resizable
@@ -216,7 +216,7 @@ function GUILib:_Build()
 	main.Name = "MainFrame"
 	main.Size = UDim2.new(0, self.Width, 0, self.Height)
 	main.Position = UDim2.new(0.5, -self.Width / 2, 0.5, -self.Height / 2)
-	main.BackgroundColor3 = self.ThemeColor
+	main.BackgroundColor3 = ThemeColor
 	main.BackgroundTransparency = T
 	main.BorderSizePixel = 0
 	main.ClipsDescendants = true
@@ -241,7 +241,7 @@ function GUILib:_Build()
 	local titleBar = Instance.new("Frame")
 	titleBar.Name = "TitleBar"
 	titleBar.Size = UDim2.new(1, 0, 0, 38)
-	titleBar.BackgroundColor3 = self.ThemeColor
+	titleBar.BackgroundColor3 = ThemeColor
 	titleBar.BackgroundTransparency = math.clamp(T + 0.1, 0, 0.95)
 	titleBar.BorderSizePixel = 0
 	titleBar.Parent = main
@@ -254,7 +254,7 @@ function GUILib:_Build()
 	titleFix.Name = "TitleFix"
 	titleFix.Size = UDim2.new(1, 0, 0, 14)
 	titleFix.Position = UDim2.new(0, 0, 1, -14)
-	titleFix.BackgroundColor3 = self.ThemeColor
+	titleFix.BackgroundColor3 = ThemeColor
 	titleFix.BackgroundTransparency = titleBar.BackgroundTransparency
 	titleFix.BorderSizePixel = 0
 	titleFix.ZIndex = titleBar.ZIndex
@@ -359,8 +359,7 @@ function GUILib:_Build()
 	tabBar.Name = "TabBar"
 	tabBar.Size = UDim2.new(0, 92, 1, -38)
 	tabBar.Position = UDim2.new(0, 0, 0, 38)
-	tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.35)
-	-- tabBar.BackgroundColor3 = Themes[theme] or Themes.Dark
+	tabBar.BackgroundColor3 = ThemeColor:Lerp(Color3.new(0, 0, 0), 0.35)
 	tabBar.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
 	tabBar.BorderSizePixel = 0
 	tabBar.Parent = main
@@ -390,7 +389,7 @@ function GUILib:_Build()
 	content.Name = "ContentArea"
 	content.Size = UDim2.new(1, -92, 1, -38)
 	content.Position = UDim2.new(0, 92, 0, 38)
-	content.BackgroundColor3 = self.ThemeColor
+	content.BackgroundColor3 = ThemeColor
 	content.BackgroundTransparency = T
 	content.BorderSizePixel = 0
 	content.Parent = main
@@ -470,7 +469,7 @@ end
 -- API: ĐỔI MÀU / KÍCH THƯỚC BẰNG SCRIPT (giữ nguyên gốc)
 --======================================================
 function GUILib:SetThemeColor(color)
-	self.ThemeColor = color
+	ThemeColor = color
 	local T = self.GlassTransparency
 
 	tween(self.MainFrame, {BackgroundColor3 = color}, 0.2)
@@ -570,7 +569,7 @@ function GUILib:Notify(title, text, duration)
 	notif.AnchorPoint = Vector2.new(1, 1)
 	notif.Position = UDim2.new(1, -20, 1, -20)
 	notif.Size = UDim2.new(0, 260, 0, 0)
-	notif.BackgroundColor3 = self.ThemeColor
+	notif.BackgroundColor3 = ThemeColor
 	notif.BackgroundTransparency = 0.15
 	notif.BorderSizePixel = 0
 	notif.ClipsDescendants = true
