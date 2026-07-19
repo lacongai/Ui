@@ -347,7 +347,7 @@ function GUILib:_Build()
 	tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.22)
 	tabBar.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
 	tabBar.BorderSizePixel = 0
-	tabBar.ZIndex = 10
+	tabBar.Parent = main
 	self.TabBar = tabBar
 
 	local tabBarLine = Instance.new("Frame")
@@ -377,7 +377,7 @@ function GUILib:_Build()
 	content.BackgroundColor3 = self.ThemeColor
 	content.BackgroundTransparency = T
 	content.BorderSizePixel = 0
-	content.ZIndex = 1
+	content.Parent = main
 	self.ContentArea = content
 
 	-- Tay cầm resize (góc dưới phải) - có biểu tượng chấm nhỏ dễ nhìn
