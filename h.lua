@@ -204,7 +204,7 @@ function GUILib:_Build()
 	main.BackgroundColor3 = self.ThemeColor
 	main.BackgroundTransparency = T
 	main.BorderSizePixel = 0
-	main.ClipsDescendants = false
+	main.ClipsDescendants = true
 	main.Parent = screenGui
 	corner(main, 14)
 	stroke(main, Color3.fromRGB(255, 255, 255), 1, 0.85)
