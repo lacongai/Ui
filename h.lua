@@ -216,7 +216,7 @@ function GUILib:_Build()
 	main.Name = "MainFrame"
 	main.Size = UDim2.new(0, self.Width, 0, self.Height)
 	main.Position = UDim2.new(0.5, -self.Width / 2, 0.5, -self.Height / 2)
-	main.BackgroundColor3 = ThemeColor
+	main.BackgroundColor3 = self.ThemeColor
 	main.BackgroundTransparency = T
 	main.BorderSizePixel = 0
 	main.ClipsDescendants = true
@@ -241,7 +241,7 @@ function GUILib:_Build()
 	local titleBar = Instance.new("Frame")
 	titleBar.Name = "TitleBar"
 	titleBar.Size = UDim2.new(1, 0, 0, 38)
-	titleBar.BackgroundColor3 = ThemeColor
+	titleBar.BackgroundColor3 = self.ThemeColor
 	titleBar.BackgroundTransparency = math.clamp(T + 0.1, 0, 0.95)
 	titleBar.BorderSizePixel = 0
 	titleBar.Parent = main
@@ -254,7 +254,7 @@ function GUILib:_Build()
 	titleFix.Name = "TitleFix"
 	titleFix.Size = UDim2.new(1, 0, 0, 14)
 	titleFix.Position = UDim2.new(0, 0, 1, -14)
-	titleFix.BackgroundColor3 = ThemeColor
+	titleFix.BackgroundColor3 = self.ThemeColor
 	titleFix.BackgroundTransparency = titleBar.BackgroundTransparency
 	titleFix.BorderSizePixel = 0
 	titleFix.ZIndex = titleBar.ZIndex
@@ -389,7 +389,7 @@ function GUILib:_Build()
 	content.Name = "ContentArea"
 	content.Size = UDim2.new(1, -92, 1, -38)
 	content.Position = UDim2.new(0, 92, 0, 38)
-	content.BackgroundColor3 = ThemeColor
+	content.BackgroundColor3 = self.ThemeColor
 	content.BackgroundTransparency = T
 	content.BorderSizePixel = 0
 	content.Parent = main
@@ -569,7 +569,7 @@ function GUILib:Notify(title, text, duration)
 	notif.AnchorPoint = Vector2.new(1, 1)
 	notif.Position = UDim2.new(1, -20, 1, -20)
 	notif.Size = UDim2.new(0, 260, 0, 0)
-	notif.BackgroundColor3 = ThemeColor
+	notif.BackgroundColor3 = self.ThemeColor
 	notif.BackgroundTransparency = 0.15
 	notif.BorderSizePixel = 0
 	notif.ClipsDescendants = true
