@@ -359,7 +359,7 @@ function GUILib:_Build()
 	tabBar.Name = "TabBar"
 	tabBar.Size = UDim2.new(0, 92, 1, -38)
 	tabBar.Position = UDim2.new(0, 0, 0, 38)
-	tabBar.BackgroundColor3 = ThemeColor:Lerp(Color3.new(0, 0, 0), 0.35)
+	tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.35)
 	tabBar.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
 	tabBar.BorderSizePixel = 0
 	tabBar.Parent = main
