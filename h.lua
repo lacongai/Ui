@@ -204,7 +204,7 @@ function GUILib:_Build()
 	main.BackgroundColor3 = self.ThemeColor
 	main.BackgroundTransparency = T
 	main.BorderSizePixel = 0
-	main.ClipsDescendants = true
+	main.ClipsDescendants = false
 	main.Parent = screenGui
 	corner(main, 14)
 	stroke(main, Color3.fromRGB(255, 255, 255), 1, 0.85)
@@ -347,7 +347,7 @@ function GUILib:_Build()
 	tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.22)
 	tabBar.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
 	tabBar.BorderSizePixel = 0
-	tabBar.Parent = main
+	tabBar.ZIndex = 10
 	self.TabBar = tabBar
 
 	local tabBarLine = Instance.new("Frame")
@@ -377,7 +377,7 @@ function GUILib:_Build()
 	content.BackgroundColor3 = self.ThemeColor
 	content.BackgroundTransparency = T
 	content.BorderSizePixel = 0
-	content.Parent = main
+	content.ZIndex = 1
 	self.ContentArea = content
 
 	-- Tay cầm resize (góc dưới phải) - có biểu tượng chấm nhỏ dễ nhìn
