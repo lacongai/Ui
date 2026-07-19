@@ -17,7 +17,7 @@
         tab1:AddToggle("Bật ESP", false, function(state) print(state) end)
         tab1:AddSlider("Tốc độ", 16, 100, 16, function(value) print(value) end)
         tab1:AddDropdown("Chọn map", {"Map1","Map2","Map3"}, function(v) end)
-        tab1:AddTextbox("Nhập tên", "Placeholder...", function(text) end)
+        tab1:AddTextbox("Nhập tên", "Placeholder...", function(Name) end)
         tab1:AddLabel("Một dòng chữ")
         tab1:AddSection("Nhóm chức năng")
 
@@ -29,7 +29,7 @@
 
     ĐIỂM MỚI SO VỚI BẢN TRƯỚC (không phá vỡ gì đã có):
     - Hiệu ứng "kính mờ" nhẹ: các khối (title bar, tab bar, thẻ nút,
-      toggle, slider, dropdown, textbox...) có độ trong suốt nhẹ +
+      toggle, slider, dropdown, Namebox...) có độ trong suốt nhẹ +
       viền sáng mảnh (UIStroke trong suốt) để trông như kính mờ hiện đại.
     - Đổ bóng mềm phía sau cửa sổ, bo góc lớn hơn, cảm giác cao cấp hơn.
     - Hiệu ứng mở cửa sổ mượt (fade + scale) khi tạo GUI.
@@ -39,7 +39,7 @@
     - Thêm các API MỚI (tùy chọn, không bắt buộc dùng, không phá API cũ):
         window:SetTransparency(value)   -- chỉnh độ trong suốt kính (0-1)
         window:SetToggleKey(keyCode)    -- đổi phím tắt ẩn/hiện (mặc định RightShift)
-        window:Notify(title, text, duration) -- thông báo nổi góc màn hình
+        window:Notify(title, Name, Duration) -- thông báo nổi góc màn hình
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -495,9 +495,9 @@ function GUILib:SetSize(width, height)
 	end
 end
 
-function GUILib:SetTitle(text)
-	self.Title = text
-	self.TitleLabel.Text = text
+function GUILib:SetTitle(Name)
+	self.Title = Name
+	self.TitleLabel.Text = Name
 end
 
 function GUILib:Toggle(visible)
@@ -526,7 +526,7 @@ end
 
 -- Chỉnh độ trong suốt "kính" của toàn bộ cửa sổ (0 = đục hoàn toàn, 1 = vô hình)
 function GUILib:SetTransparency(value)
-	value = math.clamp(value, 0, 0.6)
+	value = math.clamp(value, 0, 0.36)
 	self.GlassTransparency = value
 	local T = value
 
@@ -547,8 +547,8 @@ function GUILib:SetToggleKey(keyCode)
 end
 
 -- Hiện một thông báo nổi ở góc dưới bên phải màn hình
-function GUILib:Notify(title, text, duration)
-	duration = duration or 3
+function GUILib:Notify(Title, Name, Duration)
+	Duration = Duration or 3
 
 	local notif = Instance.new("Frame")
 	notif.AnchorPoint = Vector2.new(1, 1)
@@ -574,7 +574,7 @@ function GUILib:Notify(title, text, duration)
 	titleL.Position = UDim2.new(0, 14, 0, 8)
 	titleL.Size = UDim2.new(1, -24, 0, 18)
 	titleL.Font = Enum.Font.GothamBold
-	titleL.Text = title or "Thông báo"
+	titleL.Text = Title or "Thông báo"
 	titleL.TextColor3 = self.TextColor
 	titleL.TextSize = 13
 	titleL.TextXAlignment = Enum.TextXAlignment.Left
@@ -585,7 +585,7 @@ function GUILib:Notify(title, text, duration)
 	bodyL.Position = UDim2.new(0, 14, 0, 28)
 	bodyL.Size = UDim2.new(1, -24, 0, 0)
 	bodyL.Font = Enum.Font.Gotham
-	bodyL.Text = text or ""
+	bodyL.Text = Name or ""
 	bodyL.TextColor3 = Color3.fromRGB(210, 210, 216)
 	bodyL.TextSize = 12
 	bodyL.TextWrapped = true
@@ -597,7 +597,7 @@ function GUILib:Notify(title, text, duration)
 	local targetHeight = 28 + bodyL.AbsoluteSize.Y + 12
 	tween(notif, {Size = UDim2.new(0, 260, 0, targetHeight)}, 0.2, Enum.EasingStyle.Back)
 
-	task.delay(duration, function()
+	task.delay(Duration, function()
 		local t = tween(notif, {BackgroundTransparency = 1, Size = UDim2.new(0, 260, 0, 0)}, 0.2)
 		t.Completed:Wait()
 		notif:Destroy()
@@ -717,12 +717,12 @@ end
 --======================================================
 
 -- Nút bấm
-function Tab:AddButton(text, callback)
+function Tab:AddButton(Name, Callback)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, 0, 0, 36)
 	btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	btn.BackgroundTransparency = 0.92
-	btn.Text = text
+	btn.Text = Name
 	btn.Font = Enum.Font.GothamSemibold
 	btn.TextSize = 14
 	btn.TextColor3 = self.Library.TextColor
@@ -757,14 +757,14 @@ function Tab:AddButton(text, callback)
 			ripple:Destroy()
 		end)
 
-		if callback then callback() end
+		if Callback then Callback() end
 	end)
 
 	return btn
 end
 
 -- Công tắc bật/tắt
-function Tab:AddToggle(text, default, callback)
+function Tab:AddToggle(Name, Default, Callback)
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1, 0, 0, 34)
 	holder.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -777,7 +777,7 @@ function Tab:AddToggle(text, default, callback)
 	label.BackgroundTransparency = 1
 	label.Position = UDim2.new(0, 12, 0, 0)
 	label.Size = UDim2.new(1, -62, 1, 0)
-	label.Text = text
+	label.Text = Name
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
 	label.TextColor3 = self.Library.TextColor
@@ -787,8 +787,8 @@ function Tab:AddToggle(text, default, callback)
 	local switch = Instance.new("TextButton")
 	switch.Size = UDim2.new(0, 40, 0, 20)
 	switch.Position = UDim2.new(1, -50, 0.5, -10)
-	switch.BackgroundColor3 = default and self.Library.AccentColor or Color3.fromRGB(255, 255, 255)
-	switch.BackgroundTransparency = default and 0.1 or 0.85
+	switch.BackgroundColor3 = Default and self.Library.AccentColor or Color3.fromRGB(255, 255, 255)
+	switch.BackgroundTransparency = Default and 0.1 or 0.85
 	switch.Text = ""
 	switch.AutoButtonColor = false
 	switch.Parent = holder
@@ -796,12 +796,12 @@ function Tab:AddToggle(text, default, callback)
 
 	local knob = Instance.new("Frame")
 	knob.Size = UDim2.new(0, 16, 0, 16)
-	knob.Position = default and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+	knob.Position = Default and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
 	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	knob.Parent = switch
 	corner(knob, 8)
 
-	local state = default or false
+	local state = Default or false
 	local function updateVisual(s)
 		tween(switch, {
 			BackgroundColor3 = s and self.Library.AccentColor or Color3.fromRGB(255, 255, 255),
@@ -813,7 +813,7 @@ function Tab:AddToggle(text, default, callback)
 	switch.MouseButton1Click:Connect(function()
 		state = not state
 		updateVisual(state)
-		if callback then callback(state) end
+		if Callback then Callback(state) end
 	end)
 	holder.InputBegan:Connect(function() end) -- giữ chỗ, không phá hành vi gốc
 
@@ -827,7 +827,7 @@ function Tab:AddToggle(text, default, callback)
 end
 
 -- Thanh trượt (slider)
-function Tab:AddSlider(text, min, max, default, callback)
+function Tab:AddSlider(Name, Min, Max, Default, Callback)
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1, 0, 0, 50)
 	holder.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -840,7 +840,7 @@ function Tab:AddSlider(text, min, max, default, callback)
 	label.BackgroundTransparency = 1
 	label.Position = UDim2.new(0, 12, 0, 8)
 	label.Size = UDim2.new(1, -60, 0, 18)
-	label.Text = text
+	label.Text = Name
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
 	label.TextColor3 = self.Library.TextColor
@@ -851,7 +851,7 @@ function Tab:AddSlider(text, min, max, default, callback)
 	valueLabel.BackgroundTransparency = 1
 	valueLabel.Size = UDim2.new(0, 44, 0, 18)
 	valueLabel.Position = UDim2.new(1, -56, 0, 8)
-	valueLabel.Text = tostring(default)
+	valueLabel.Text = tostring(Default)
 	valueLabel.Font = Enum.Font.GothamBold
 	valueLabel.TextSize = 13
 	valueLabel.TextColor3 = self.Library.AccentColor
@@ -867,7 +867,7 @@ function Tab:AddSlider(text, min, max, default, callback)
 	corner(track, 3)
 
 	local fill = Instance.new("Frame")
-	local pct = (default - min) / (max - min)
+	local pct = (Default - Min) / (Max - Min)
 	fill.Size = UDim2.new(pct, 0, 1, 0)
 	fill.BackgroundColor3 = self.Library.AccentColor
 	fill.BorderSizePixel = 0
@@ -887,12 +887,12 @@ function Tab:AddSlider(text, min, max, default, callback)
 	local dragging = false
 	local function updateFromInput(inputPos)
 		local relX = math.clamp((inputPos - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-		local value = math.floor(min + (max - min) * relX + 0.5)
-		relX = (value - min) / (max - min)
+		local value = math.floor(Min + (Max - Min) * relX + 0.5)
+		relX = (value - Min) / (Max - Min)
 		fill.Size = UDim2.new(relX, 0, 1, 0)
 		knob.Position = UDim2.new(relX, 0, 0.5, 0)
 		valueLabel.Text = tostring(value)
-		if callback then callback(value) end
+		if Callback then Callback(value) end
 		return value
 	end
 
@@ -917,7 +917,7 @@ function Tab:AddSlider(text, min, max, default, callback)
 end
 
 -- Dropdown chọn 1 trong nhiều lựa chọn
-function Tab:AddDropdown(text, options, callback)
+function Tab:AddDropdown(Name, Options, Callback)
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1, 0, 0, 36)
 	holder.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -930,7 +930,7 @@ function Tab:AddDropdown(text, options, callback)
 	local main = Instance.new("TextButton")
 	main.Size = UDim2.new(1, 0, 0, 36)
 	main.BackgroundTransparency = 1
-	main.Text = "  " .. text
+	main.Text = "  " .. Name
 	main.Font = Enum.Font.Gotham
 	main.TextSize = 13
 	main.TextColor3 = self.Library.TextColor
@@ -948,7 +948,7 @@ function Tab:AddDropdown(text, options, callback)
 	arrow.Parent = holder
 
 	local listHolder = Instance.new("Frame")
-	listHolder.Size = UDim2.new(1, 0, 0, #options * 28)
+	listHolder.Size = UDim2.new(1, 0, 0, #Options * 28)
 	listHolder.Position = UDim2.new(0, 0, 0, 36)
 	listHolder.BackgroundTransparency = 1
 	listHolder.Parent = holder
@@ -958,7 +958,7 @@ function Tab:AddDropdown(text, options, callback)
 	layout.Parent = listHolder
 
 	local expanded = false
-	for _, option in ipairs(options) do
+	for _, option in ipairs(Options) do
 		local optBtn = Instance.new("TextButton")
 		optBtn.AutoButtonColor = false
 		optBtn.Size = UDim2.new(1, 0, 0, 28)
@@ -983,14 +983,14 @@ function Tab:AddDropdown(text, options, callback)
 			expanded = false
 			tween(holder, {Size = UDim2.new(1, 0, 0, 36)}, 0.15)
 			tween(arrow, {Rotation = 0}, 0.15)
-			if callback then callback(option) end
+			if Callback then Callback(option) end
 		end)
 	end
 
 	main.MouseButton1Click:Connect(function()
 		expanded = not expanded
 		if expanded then
-			tween(holder, {Size = UDim2.new(1, 0, 0, 36 + #options * 28)}, 0.18)
+			tween(holder, {Size = UDim2.new(1, 0, 0, 36 + #Options * 28)}, 0.18)
 			tween(arrow, {Rotation = 180}, 0.18)
 		else
 			tween(holder, {Size = UDim2.new(1, 0, 0, 36)}, 0.15)
@@ -1002,7 +1002,7 @@ function Tab:AddDropdown(text, options, callback)
 end
 
 -- Ô nhập chữ
-function Tab:AddTextbox(text, placeholder, callback)
+function Tab:AddTextbox(Name, Placeholder, Callback)
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1, 0, 0, 52)
 	holder.BackgroundTransparency = 1
@@ -1011,7 +1011,7 @@ function Tab:AddTextbox(text, placeholder, callback)
 	local label = Instance.new("TextLabel")
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.new(1, 0, 0, 16)
-	label.Text = text
+	label.Text = Name
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
 	label.TextColor3 = self.Library.TextColor
@@ -1023,7 +1023,7 @@ function Tab:AddTextbox(text, placeholder, callback)
 	box.Position = UDim2.new(0, 0, 0, 18)
 	box.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	box.BackgroundTransparency = 0.92
-	box.PlaceholderText = placeholder or ""
+	box.PlaceholderText = Placeholder or ""
 	box.PlaceholderColor3 = Color3.fromRGB(150, 150, 158)
 	box.Text = ""
 	box.Font = Enum.Font.Gotham
@@ -1039,18 +1039,18 @@ function Tab:AddTextbox(text, placeholder, callback)
 	end)
 	box.FocusLost:Connect(function(enterPressed)
 		tween(boxStroke, {Color = Color3.fromRGB(255, 255, 255), Transparency = 0.88}, 0.15)
-		if callback then callback(box.Text, enterPressed) end
+		if Callback then Callback(box.Text, enterPressed) end
 	end)
 
 	return box
 end
 
 -- Nhãn chữ đơn thuần
-function Tab:AddLabel(text)
+function Tab:AddLabel(Name)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 20)
 	label.BackgroundTransparency = 1
-	label.Text = text
+	label.Text = Name
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
 	label.TextColor3 = self.Library.TextColor
@@ -1061,7 +1061,7 @@ function Tab:AddLabel(text)
 end
 
 -- Đường kẻ phân cách / tiêu đề nhóm
-function Tab:AddSection(text)
+function Tab:AddSection(Name)
 	local holder = Instance.new("Frame")
 	holder.Size = UDim2.new(1, 0, 0, 24)
 	holder.BackgroundTransparency = 1
@@ -1070,7 +1070,7 @@ function Tab:AddSection(text)
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0, 16)
 	label.BackgroundTransparency = 1
-	label.Text = string.upper(text)
+	label.Text = string.upper(Name)
 	label.Font = Enum.Font.GothamBold
 	label.TextSize = 11
 	label.TextColor3 = self.Library.AccentColor
