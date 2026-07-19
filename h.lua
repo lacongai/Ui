@@ -180,7 +180,7 @@ function GUILib:_Build()
 	shadow.ScaleType = Enum.ScaleType.Slice
 	shadow.SliceCenter = Rect.new(99, 99, 99, 99)
 	shadow.ZIndex = 0
-	-- shadow.Parent = screenGui
+	shadow.Parent = screenGui
 	self.Shadow = shadow
 
 	-- Quầng sáng viền theo màu nhấn (glow nhẹ quanh cửa sổ)
@@ -193,7 +193,7 @@ function GUILib:_Build()
 	glow.ScaleType = Enum.ScaleType.Slice
 	glow.SliceCenter = Rect.new(99, 99, 99, 99)
 	glow.ZIndex = 0
-	-- glow.Parent = screenGui
+	glow.Parent = screenGui
 	self.GlowImage = glow
 
 	-- Khung chính (Main Frame) - có độ trong suốt nhẹ kiểu kính mờ
