@@ -1,23 +1,41 @@
--- Roblox Modern UI Library - Glassmorphism Design
--- Premium Glass Effect with 60% Transparency
+-- Roblox Modern UI Library - Premium Glass Design
+-- Độ trong suốt 60% với hiệu ứng thủy tinh hiện đại
 
 local UI = {}
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
+-- Bảng màu mở rộng với nhiều lựa chọn đa dạng
 local Themes = {
-    Ocean = Color3.fromRGB(0, 180, 255),
-    Sunset = Color3.fromRGB(255, 100, 50),
-    Aurora = Color3.fromRGB(0, 255, 180),
-    Galaxy = Color3.fromRGB(150, 50, 255),
-    Rose = Color3.fromRGB(255, 80, 150),
-    Gold = Color3.fromRGB(255, 200, 50),
-    Emerald = Color3.fromRGB(50, 255, 150),
-    Ruby = Color3.fromRGB(255, 50, 50),
-    Sapphire = Color3.fromRGB(50, 100, 255),
-    Diamond = Color3.fromRGB(200, 220, 255),
-    Magma = Color3.fromRGB(255, 100, 0),
-    Frost = Color3.fromRGB(150, 255, 255)
+    -- Màu cơ bản
+    Dark = Color3.fromRGB(100, 150, 255),
+    Red = Color3.fromRGB(255, 80, 80),
+    Green = Color3.fromRGB(80, 255, 120),
+    Blue = Color3.fromRGB(80, 180, 255),
+    Purple = Color3.fromRGB(180, 100, 255),
+    Pink = Color3.fromRGB(255, 120, 180),
+    Orange = Color3.fromRGB(255, 150, 80),
+    Yellow = Color3.fromRGB(255, 220, 80),
+    Cyan = Color3.fromRGB(80, 220, 255),
+    Magenta = Color3.fromRGB(255, 80, 200),
+    -- Màu Premium
+    Rose = Color3.fromRGB(255, 100, 130),
+    Violet = Color3.fromRGB(130, 80, 255),
+    Teal = Color3.fromRGB(80, 200, 200),
+    Coral = Color3.fromRGB(255, 130, 100),
+    Mint = Color3.fromRGB(100, 255, 180),
+    Amber = Color3.fromRGB(255, 180, 60),
+    Lavender = Color3.fromRGB(180, 140, 255),
+    Sky = Color3.fromRGB(100, 200, 255),
+    Blush = Color3.fromRGB(255, 150, 180),
+    Lime = Color3.fromRGB(150, 255, 80),
+    -- Màu Neon
+    NeonPink = Color3.fromRGB(255, 20, 147),
+    NeonBlue = Color3.fromRGB(0, 150, 255),
+    NeonGreen = Color3.fromRGB(57, 255, 20),
+    NeonOrange = Color3.fromRGB(255, 140, 0),
+    NeonPurple = Color3.fromRGB(180, 0, 255),
 }
 
 local IconLibrary = {
@@ -39,12 +57,39 @@ local IconLibrary = {
     flame = "rbxassetid://10709791151",
     gem = "rbxassetid://10709791682",
     coin = "rbxassetid://10709790537",
-    box = "rbxassetid://10709789989"
+    box = "rbxassetid://10709789989",
+    music = "rbxassetid://10709792891",
+    book = "rbxassetid://10709790258",
+    cloud = "rbxassetid://10709790443",
+    compass = "rbxassetid://10709790537",
+    diamond = "rbxassetid://10709790644",
+    eye = "rbxassetid://10709790755",
+    feather = "rbxassetid://10709790866",
+    key = "rbxassetid://10709790948",
+    lock = "rbxassetid://10709791055",
+    map = "rbxassetid://10709791151",
+    moon = "rbxassetid://10709791263",
+    sun = "rbxassetid://10709791374",
+    tree = "rbxassetid://10709791437",
+    wand = "rbxassetid://10709791548",
 }
 
 local function GetIcon(name)
     if string.find(name, "rbxassetid://") then return name end
     return IconLibrary[name] or IconLibrary.home
+end
+
+-- Tạo hiệu ứng chuyển màu gradient
+local function CreateGradient(colors, angle)
+    local gradient = Instance.new("UIGradient")
+    gradient.Rotation = angle or 45
+    for i, color in ipairs(colors) do
+        local stop = Instance.new("NumberSequenceKeypoint")
+        stop.Time = (i - 1) / (#colors - 1)
+        stop.Value = color
+        gradient.Color = NumberSequence.new(gradient.Color or NumberSequence.new(), stop)
+    end
+    return gradient
 end
 
 local function MakeDragFromArea(frame, area)
@@ -78,186 +123,180 @@ function UI.CreateWindow(config)
     config = config or {}
     local title = config.Title or "Hub"
     local subtitle = config.Subtitle or ""
-    local theme = config.Theme or "Ocean"
+    local theme = config.Theme or "Dark"
     local toggleIcon = config.ToggleIcon
-    local width = config.Width or 800
-    local height = config.Height or 620
+    local width = config.Width or 750
+    local height = config.Height or 580
 
-    local ThemeColor = Themes[theme] or Themes.Ocean
-    local GlassColor = Color3.fromRGB(255, 255, 255)
-    local GlassTransparency = 0.6
+    local ThemeColor = Themes[theme] or Themes.Dark
+    local SecondaryColor = ThemeColor:Lerp(Color3.fromRGB(255, 255, 255), 0.3)
 
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "PremiumUI"
+    ScreenGui.Name = "UILibrary"
     ScreenGui.ResetOnSpawn = false
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = game:GetService("CoreGui")
 
-    -- Background Overlay
-    local Overlay = Instance.new("Frame")
-    Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    Overlay.BackgroundTransparency = 0.3
-    Overlay.BorderSizePixel = 0
-    Overlay.Size = UDim2.new(1, 0, 1, 0)
-    Overlay.Parent = ScreenGui
-
-    -- Main Window - Glassmorphism
+    -- === CỬA SỔ CHÍNH - THIẾT KẾ THỦY TINH HIỆN ĐẠI ===
     local MainFrame = Instance.new("Frame")
-    MainFrame.BackgroundColor3 = GlassColor
-    MainFrame.BackgroundTransparency = GlassTransparency
+    MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 30)
+    MainFrame.BackgroundTransparency = 0.4 -- 60% độ trong suốt
     MainFrame.BorderSizePixel = 0
     MainFrame.Position = UDim2.new(0.5, -width / 2, 0.5, -height / 2)
     MainFrame.Size = UDim2.new(0, width, 0, height)
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
 
+    -- Bo góc chính - bo tròn hơn
     local Corner = Instance.new("UICorner")
     Corner.CornerRadius = UDim.new(0, 28)
     Corner.Parent = MainFrame
 
-    -- Border Glow
+    -- Viền phát sáng cho hiệu ứng Glass
     local BorderGlow = Instance.new("Frame")
+    BorderGlow.BackgroundTransparency = 0.85
     BorderGlow.BackgroundColor3 = ThemeColor
-    BorderGlow.BackgroundTransparency = 0.5
     BorderGlow.BorderSizePixel = 0
-    BorderGlow.Position = UDim2.new(0, -2, 0, -2)
-    BorderGlow.Size = UDim2.new(1, 4, 1, 4)
+    BorderGlow.Position = UDim2.new(-0.02, 0, -0.02, 0)
+    BorderGlow.Size = UDim2.new(1.04, 0, 1.04, 0)
     BorderGlow.ZIndex = 0
     BorderGlow.Parent = MainFrame
-
+    
     local BorderCorner = Instance.new("UICorner")
-    BorderCorner.CornerRadius = UDim.new(0, 30)
+    BorderCorner.CornerRadius = UDim.new(0, 32)
     BorderCorner.Parent = BorderGlow
 
-    -- Inner Glow
-    local InnerGlow = Instance.new("Frame")
-    InnerGlow.BackgroundColor3 = ThemeColor
-    InnerGlow.BackgroundTransparency = 0.85
-    InnerGlow.BorderSizePixel = 0
-    InnerGlow.Position = UDim2.new(0.05, 0, 0.05, 0)
-    InnerGlow.Size = UDim2.new(0.9, 0, 0.9, 0)
-    InnerGlow.ZIndex = 0
-    InnerGlow.Parent = MainFrame
+    -- Hiệu ứng mờ Glass (ImageLabel với blur)
+    local GlassBlur = Instance.new("ImageLabel")
+    GlassBlur.BackgroundTransparency = 1
+    GlassBlur.Position = UDim2.new(0, 0, 0, 0)
+    GlassBlur.Size = UDim2.new(1, 0, 1, 0)
+    GlassBlur.Image = "rbxassetid://6014261993"
+    GlassBlur.ImageColor3 = Color3.fromRGB(30, 30, 50)
+    GlassBlur.ImageTransparency = 0.6
+    GlassBlur.ScaleType = Enum.ScaleType.Slice
+    GlassBlur.SliceCenter = Rect.new(99, 99, 99, 99)
+    GlassBlur.ZIndex = 0
+    GlassBlur.Parent = MainFrame
 
-    local InnerCorner = Instance.new("UICorner")
-    InnerCorner.CornerRadius = UDim.new(0, 26)
-    InnerCorner.Parent = InnerGlow
+    -- Lớp phủ gradient chuyển động
+    local GradientOverlay = Instance.new("Frame")
+    GradientOverlay.BackgroundTransparency = 0.85
+    GradientOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    GradientOverlay.BorderSizePixel = 0
+    GradientOverlay.Size = UDim2.new(1, 0, 1, 0)
+    GradientOverlay.ZIndex = 1
+    GradientOverlay.Parent = MainFrame
+    
+    local GradOverlayCorner = Instance.new("UICorner")
+    GradOverlayCorner.CornerRadius = UDim.new(0, 28)
+    GradOverlayCorner.Parent = GradientOverlay
 
-    -- Floating Particles Background
-    for i = 1, 20 do
-        local Particle = Instance.new("Frame")
-        Particle.BackgroundColor3 = ThemeColor
-        Particle.BackgroundTransparency = 0.7
-        Particle.BorderSizePixel = 0
-        Particle.Size = UDim2.new(0, math.random(2, 6), 0, math.random(2, 6))
-        Particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        Particle.ZIndex = 0
-        Particle.Parent = MainFrame
+    -- Hiệu ứng ánh sáng chuyển động
+    local ShineEffect = Instance.new("ImageLabel")
+    ShineEffect.BackgroundTransparency = 1
+    ShineEffect.Size = UDim2.new(1.5, 0, 1, 0)
+    ShineEffect.Image = "rbxassetid://6014261993"
+    ShineEffect.ImageColor3 = Color3.fromRGB(255, 255, 255)
+    ShineEffect.ImageTransparency = 0.85
+    ShineEffect.ScaleType = Enum.ScaleType.Slice
+    ShineEffect.SliceCenter = Rect.new(99, 99, 99, 99)
+    ShineEffect.ZIndex = 2
+    ShineEffect.Parent = MainFrame
 
-        local ParticleCorner = Instance.new("UICorner")
-        ParticleCorner.CornerRadius = UDim.new(1, 0)
-        ParticleCorner.Parent = Particle
+    -- Animation ánh sáng
+    local shineAngle = 0
+    RunService.Heartbeat:Connect(function(dt)
+        shineAngle = (shineAngle + dt * 15) % 360
+        ShineEffect.Position = UDim2.new(math.sin(math.rad(shineAngle)) * 0.2 + 0.3, 0, 0, 0)
+    end)
 
-        TweenService:Create(Particle, TweenInfo.new(
-            math.random(3, 8), 
-            Enum.EasingStyle.Sine, 
-            Enum.EasingDirection.InOut, 
-            -1, 
-            true
-        ), {
-            Position = UDim2.new(math.random(), 0, math.random(), 0),
-            BackgroundTransparency = math.random(4, 8) / 10
-        }):Play()
-    end
-
-    -- Top Section with Gradient
+    -- === HEADER ===
     local TopSection = Instance.new("Frame")
-    TopSection.BackgroundColor3 = GlassColor
-    TopSection.BackgroundTransparency = 0.2
+    TopSection.BackgroundTransparency = 0.6
+    TopSection.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
     TopSection.BorderSizePixel = 0
-    TopSection.Size = UDim2.new(1, 0, 0, 85)
+    TopSection.Size = UDim2.new(1, 0, 0, 80)
     TopSection.Parent = MainFrame
 
     local TopCorner = Instance.new("UICorner")
     TopCorner.CornerRadius = UDim.new(0, 28)
     TopCorner.Parent = TopSection
 
-    -- Gradient Line
-    local GradientLine = Instance.new("Frame")
-    GradientLine.BackgroundColor3 = ThemeColor
-    GradientLine.BackgroundTransparency = 0.3
-    GradientLine.BorderSizePixel = 0
-    GradientLine.Position = UDim2.new(0, 0, 1, -3)
-    GradientLine.Size = UDim2.new(0.8, 0, 0, 3)
-    GradientLine.Parent = TopSection
+    -- Thanh gradient trang trí
+    local AccentBar = Instance.new("Frame")
+    AccentBar.BackgroundTransparency = 0.1
+    AccentBar.BackgroundColor3 = ThemeColor
+    AccentBar.BorderSizePixel = 0
+    AccentBar.Position = UDim2.new(0, 0, 1, -3)
+    AccentBar.Size = UDim2.new(0.7, 0, 0, 3)
+    AccentBar.Parent = TopSection
+    AccentBar.ZIndex = 10
+    
+    local AccentGrad = Instance.new("UIGradient")
+    AccentGrad.Rotation = 90
+    AccentGrad.Color = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, ThemeColor),
+        NumberSequenceKeypoint.new(0.5, SecondaryColor),
+        NumberSequenceKeypoint.new(1, ThemeColor)
+    })
+    AccentGrad.Parent = AccentBar
 
-    -- Drag Area
+    -- Vùng kéo
     local DragArea = Instance.new("Frame")
     DragArea.BackgroundTransparency = 1
-    DragArea.Size = UDim2.new(1, -60, 1, 0)
+    DragArea.Size = UDim2.new(1, -50, 1, 0)
     DragArea.Parent = TopSection
 
-    -- Title with Glow Effect
+    -- Tiêu đề với hiệu ứng bóng
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Position = UDim2.new(0, 28, 0, 14)
-    TitleLabel.Size = UDim2.new(1, -100, 0, 30)
+    TitleLabel.Position = UDim2.new(0, 24, 0, 12)
+    TitleLabel.Size = UDim2.new(1, -80, 0, 28)
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.Text = title
-    TitleLabel.TextColor3 = ThemeColor
-    TitleLabel.TextSize = 26
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.TextSize = 24
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = TopSection
+    
+    -- Bóng chữ cho tiêu đề
+    local TitleGlow = Instance.new("TextLabel")
+    TitleGlow.BackgroundTransparency = 1
+    TitleGlow.Position = UDim2.new(0, 26, 0, 14)
+    TitleGlow.Size = UDim2.new(1, -80, 0, 28)
+    TitleGlow.Font = Enum.Font.GothamBold
+    TitleGlow.Text = title
+    TitleGlow.TextColor3 = ThemeColor
+    TitleGlow.TextSize = 24
+    TitleGlow.TextXAlignment = Enum.TextXAlignment.Left
+    TitleGlow.TextTransparency = 0.7
+    TitleGlow.ZIndex = 0
+    TitleGlow.Parent = TopSection
 
-    -- Title Shadow
-    local TitleShadow = TitleLabel:Clone()
-    TitleShadow.Position = UDim2.new(0, 30, 0, 16)
-    TitleShadow.TextColor3 = Color3.fromRGB(0, 0, 0)
-    TitleShadow.TextTransparency = 0.7
-    TitleShadow.ZIndex = -1
-    TitleShadow.Parent = TopSection
-
-    -- Subtitle
+    -- Phụ đề
     local SubLabel = Instance.new("TextLabel")
     SubLabel.BackgroundTransparency = 1
-    SubLabel.Position = UDim2.new(0, 28, 0, 48)
-    SubLabel.Size = UDim2.new(1, -100, 0, 16)
+    SubLabel.Position = UDim2.new(0, 24, 0, 44)
+    SubLabel.Size = UDim2.new(1, -80, 0, 14)
     SubLabel.Font = Enum.Font.Gotham
     SubLabel.Text = subtitle
-    SubLabel.TextColor3 = Color3.fromRGB(200, 200, 220)
+    SubLabel.TextColor3 = Color3.fromRGB(180, 180, 200)
     SubLabel.TextSize = 11
     SubLabel.TextXAlignment = Enum.TextXAlignment.Left
-    SubLabel.TextTransparency = 0.3
     SubLabel.Parent = TopSection
 
-    -- Premium Badge
-    local Badge = Instance.new("TextLabel")
-    Badge.BackgroundColor3 = ThemeColor
-    Badge.BackgroundTransparency = 0.85
-    Badge.BorderSizePixel = 0
-    Badge.Position = UDim2.new(0.7, 0, 0, 22)
-    Badge.Size = UDim2.new(0, 80, 0, 24)
-    Badge.Font = Enum.Font.GothamBold
-    Badge.Text = "✦ PREMIUM"
-    Badge.TextColor3 = ThemeColor
-    Badge.TextSize = 9
-    Badge.Parent = TopSection
-
-    local BadgeCorner = Instance.new("UICorner")
-    BadgeCorner.CornerRadius = UDim.new(1, 0)
-    BadgeCorner.Parent = Badge
-
-    -- Close Button with Hover Animation
+    -- Nút đóng với hiệu ứng hover
     local CloseBtn = Instance.new("TextButton")
-    CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    CloseBtn.BackgroundTransparency = 0.85
+    CloseBtn.BackgroundTransparency = 0.5
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 30, 30)
     CloseBtn.BorderSizePixel = 0
-    CloseBtn.Position = UDim2.new(1, -48, 0, 28)
-    CloseBtn.Size = UDim2.new(0, 32, 0, 32)
+    CloseBtn.Position = UDim2.new(1, -45, 0, 25)
+    CloseBtn.Size = UDim2.new(0, 28, 0, 28)
     CloseBtn.Font = Enum.Font.GothamBold
     CloseBtn.Text = "✕"
-    CloseBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
-    CloseBtn.TextSize = 18
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 120, 120)
+    CloseBtn.TextSize = 16
     CloseBtn.Parent = TopSection
 
     local CloseCorner = Instance.new("UICorner")
@@ -266,119 +305,111 @@ function UI.CreateWindow(config)
 
     CloseBtn.MouseEnter:Connect(function()
         TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
-            BackgroundTransparency = 0.5,
-            BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+            BackgroundTransparency = 0,
+            BackgroundColor3 = Color3.fromRGB(255, 80, 80),
+            TextColor3 = Color3.fromRGB(255, 255, 255)
         }):Play()
-        TweenService:Create(CloseBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
     end)
 
     CloseBtn.MouseLeave:Connect(function()
         TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
-            BackgroundTransparency = 0.85,
-            BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            BackgroundTransparency = 0.5,
+            BackgroundColor3 = Color3.fromRGB(40, 30, 30),
+            TextColor3 = Color3.fromRGB(255, 120, 120)
         }):Play()
-        TweenService:Create(CloseBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 80, 80)}):Play()
     end)
 
     CloseBtn.MouseButton1Click:Connect(function()
-        TweenService:Create(MainFrame, TweenInfo.new(0.2), {
-            Size = UDim2.new(0, width, 0, 0),
-            Position = UDim2.new(0.5, -width / 2, 0.5, 0)
-        }):Play()
-        TweenService:Create(Overlay, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-        wait(0.2)
-        ScreenGui:Destroy()
+        local tween = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(0.5, 0, 0.5, 0)
+        })
+        tween:Play()
+        tween.Completed:Connect(function()
+            ScreenGui:Destroy()
+        end)
     end)
 
     MakeDragFromArea(MainFrame, DragArea)
 
-    -- Sidebar - Glass Panel
+    -- === THANH BÊN ===
     local Sidebar = Instance.new("Frame")
-    Sidebar.BackgroundColor3 = GlassColor
-    Sidebar.BackgroundTransparency = 0.4
+    Sidebar.BackgroundTransparency = 0.5
+    Sidebar.BackgroundColor3 = Color3.fromRGB(8, 8, 18)
     Sidebar.BorderSizePixel = 0
-    Sidebar.Position = UDim2.new(0, 8, 0, 85)
-    Sidebar.Size = UDim2.new(0, 85, 1, -93)
+    Sidebar.Position = UDim2.new(0, 0, 0, 80)
+    Sidebar.Size = UDim2.new(0, 100, 1, -80)
     Sidebar.Parent = MainFrame
-
-    local SidebarCorner = Instance.new("UICorner")
-    SidebarCorner.CornerRadius = UDim.new(0, 20)
-    SidebarCorner.Parent = Sidebar
 
     local SidebarList = Instance.new("UIListLayout")
     SidebarList.Parent = Sidebar
     SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
-    SidebarList.Padding = UDim.new(0, 6)
+    SidebarList.Padding = UDim.new(0, 8)
 
     local SidebarPadding = Instance.new("UIPadding")
     SidebarPadding.Parent = Sidebar
-    SidebarPadding.PaddingTop = UDim.new(0, 10)
-    SidebarPadding.PaddingBottom = UDim.new(0, 10)
-    SidebarPadding.PaddingLeft = UDim.new(0, 8)
-    SidebarPadding.PaddingRight = UDim.new(0, 8)
+    SidebarPadding.PaddingTop = UDim.new(0, 12)
+    SidebarPadding.PaddingLeft = UDim.new(0, 10)
+    SidebarPadding.PaddingRight = UDim.new(0, 10)
 
-    -- Content Area - Glass Panel
+    -- === VÙNG NỘI DUNG ===
     local ContentArea = Instance.new("Frame")
-    ContentArea.BackgroundColor3 = GlassColor
-    ContentArea.BackgroundTransparency = 0.3
+    ContentArea.BackgroundTransparency = 1
     ContentArea.BorderSizePixel = 0
-    ContentArea.Position = UDim2.new(0, 100, 0, 85)
-    ContentArea.Size = UDim2.new(1, -108, 1, -93)
+    ContentArea.Position = UDim2.new(0, 100, 0, 80)
+    ContentArea.Size = UDim2.new(1, -100, 1, -80)
     ContentArea.Parent = MainFrame
 
-    local ContentCorner = Instance.new("UICorner")
-    ContentCorner.CornerRadius = UDim.new(0, 20)
-    ContentCorner.Parent = ContentArea
-
-    -- Toggle Button - Floating Glass
+    -- === NÚT THU GỌN ===
     local ToggleBtn = Instance.new("Frame")
-    ToggleBtn.BackgroundColor3 = GlassColor
     ToggleBtn.BackgroundTransparency = 0.3
+    ToggleBtn.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
     ToggleBtn.BorderSizePixel = 0
-    ToggleBtn.Position = UDim2.new(0, 20, 0, 20)
-    ToggleBtn.Size = UDim2.new(0, 70, 0, 70)
+    ToggleBtn.Position = UDim2.new(0, 16, 0, 16)
+    ToggleBtn.Size = UDim2.new(0, 64, 0, 64)
     ToggleBtn.Parent = ScreenGui
 
     local ToggleCorner = Instance.new("UICorner")
     ToggleCorner.CornerRadius = UDim.new(0, 20)
     ToggleCorner.Parent = ToggleBtn
-
-    -- Toggle Glow Ring
-    local ToggleRing = Instance.new("Frame")
-    ToggleRing.BackgroundColor3 = ThemeColor
-    ToggleRing.BackgroundTransparency = 0.6
-    ToggleRing.BorderSizePixel = 0
-    ToggleRing.Size = UDim2.new(1.15, 0, 1.15, 0)
-    ToggleRing.Position = UDim2.new(-0.075, 0, -0.075, 0)
-    ToggleRing.ZIndex = 0
-    ToggleRing.Parent = ToggleBtn
-
-    local RingCorner = Instance.new("UICorner")
-    RingCorner.CornerRadius = UDim.new(0, 23)
-    RingCorner.Parent = ToggleRing
+    
+    -- Hiệu ứng phát sáng cho nút toggle
+    local ToggleGlow = Instance.new("Frame")
+    ToggleGlow.BackgroundTransparency = 0.7
+    ToggleGlow.BackgroundColor3 = ThemeColor
+    ToggleGlow.BorderSizePixel = 0
+    ToggleGlow.Position = UDim2.new(-0.05, 0, -0.05, 0)
+    ToggleGlow.Size = UDim2.new(1.1, 0, 1.1, 0)
+    ToggleGlow.ZIndex = 0
+    ToggleGlow.Parent = ToggleBtn
+    
+    local ToggleGlowCorner = Instance.new("UICorner")
+    ToggleGlowCorner.CornerRadius = UDim.new(0, 22)
+    ToggleGlowCorner.Parent = ToggleGlow
 
     local ToggleInner = Instance.new("Frame")
+    ToggleInner.BackgroundTransparency = 0.1
     ToggleInner.BackgroundColor3 = ThemeColor
-    ToggleInner.BackgroundTransparency = 0.85
     ToggleInner.BorderSizePixel = 0
     ToggleInner.Size = UDim2.new(1, 0, 1, 0)
     ToggleInner.Parent = ToggleBtn
+    ToggleInner.ZIndex = 1
 
-    local InnerCorner2 = Instance.new("UICorner")
-    InnerCorner2.CornerRadius = UDim.new(0, 18)
-    InnerCorner2.Parent = ToggleInner
+    local InnerCorner = Instance.new("UICorner")
+    InnerCorner.CornerRadius = UDim.new(0, 18)
+    InnerCorner.Parent = ToggleInner
 
     local Padding = Instance.new("UIPadding")
-    Padding.PaddingBottom = UDim.new(0, 4)
-    Padding.PaddingLeft = UDim.new(0, 4)
-    Padding.PaddingRight = UDim.new(0, 4)
-    Padding.PaddingTop = UDim.new(0, 4)
+    Padding.PaddingBottom = UDim.new(0, 3)
+    Padding.PaddingLeft = UDim.new(0, 3)
+    Padding.PaddingRight = UDim.new(0, 3)
+    Padding.PaddingTop = UDim.new(0, 3)
     Padding.Parent = ToggleInner
 
     if toggleIcon then
         local ToggleImg = Instance.new("ImageButton")
-        ToggleImg.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        ToggleImg.BackgroundTransparency = 0.5
+        ToggleImg.BackgroundTransparency = 0.3
+        ToggleImg.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
         ToggleImg.BorderSizePixel = 0
         ToggleImg.Size = UDim2.new(1, 0, 1, 0)
         ToggleImg.Image = GetIcon(toggleIcon)
@@ -386,39 +417,43 @@ function UI.CreateWindow(config)
         ToggleImg.Parent = ToggleInner
 
         local ImgCorner = Instance.new("UICorner")
-        ImgCorner.CornerRadius = UDim.new(0, 14)
+        ImgCorner.CornerRadius = UDim.new(0, 16)
         ImgCorner.Parent = ToggleImg
 
         local visible = true
         ToggleImg.MouseButton1Click:Connect(function()
             visible = not visible
-            TweenService:Create(MainFrame, TweenInfo.new(0.25), {
-                BackgroundTransparency = visible and GlassTransparency or 1,
-                Size = visible and UDim2.new(0, width, 0, height) or UDim2.new(0, 0, 0, 0)
+            local targetSize = visible and UDim2.new(0, width, 0, height) or UDim2.new(0, 0, 0, 0)
+            local targetPos = visible and UDim2.new(0.5, -width / 2, 0.5, -height / 2) or UDim2.new(0.5, 0, 0.5, 0)
+            TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = targetSize,
+                Position = targetPos
             }):Play()
         end)
     else
         local ToggleText = Instance.new("TextButton")
-        ToggleText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        ToggleText.BackgroundTransparency = 0.5
+        ToggleText.BackgroundTransparency = 0.3
+        ToggleText.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
         ToggleText.BorderSizePixel = 0
         ToggleText.Size = UDim2.new(1, 0, 1, 0)
         ToggleText.Font = Enum.Font.GothamBold
         ToggleText.Text = "◆"
         ToggleText.TextColor3 = ThemeColor
-        ToggleText.TextSize = 34
+        ToggleText.TextSize = 32
         ToggleText.Parent = ToggleInner
 
         local TxtCorner = Instance.new("UICorner")
-        TxtCorner.CornerRadius = UDim.new(0, 14)
+        TxtCorner.CornerRadius = UDim.new(0, 16)
         TxtCorner.Parent = ToggleText
 
         local visible = true
         ToggleText.MouseButton1Click:Connect(function()
             visible = not visible
-            TweenService:Create(MainFrame, TweenInfo.new(0.25), {
-                BackgroundTransparency = visible and GlassTransparency or 1,
-                Size = visible and UDim2.new(0, width, 0, height) or UDim2.new(0, 0, 0, 0)
+            local targetSize = visible and UDim2.new(0, width, 0, height) or UDim2.new(0, 0, 0, 0)
+            local targetPos = visible and UDim2.new(0.5, -width / 2, 0.5, -height / 2) or UDim2.new(0.5, 0, 0.5, 0)
+            TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = targetSize,
+                Position = targetPos
             }):Play()
         end)
     end
@@ -426,6 +461,7 @@ function UI.CreateWindow(config)
     local Window = {
         Tabs = {},
         ThemeColor = ThemeColor,
+        SecondaryColor = SecondaryColor,
         MainFrame = MainFrame,
         ContentArea = ContentArea,
         ScreenGui = ScreenGui
@@ -436,19 +472,20 @@ function UI.CreateWindow(config)
         local tabName = cfg.Title or "Tab"
         local tabIcon = cfg.Icon or "home"
 
+        -- Nút Tab
         local TabBtn = Instance.new("TextButton")
-        TabBtn.BackgroundColor3 = GlassColor
-        TabBtn.BackgroundTransparency = 0.7
+        TabBtn.BackgroundTransparency = 0.4
+        TabBtn.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
         TabBtn.BorderSizePixel = 0
-        TabBtn.Size = UDim2.new(1, 0, 0, 65)
+        TabBtn.Size = UDim2.new(1, 0, 0, 70)
         TabBtn.Text = ""
         TabBtn.Parent = Sidebar
 
         local TabCorner = Instance.new("UICorner")
-        TabCorner.CornerRadius = UDim.new(0, 14)
+        TabCorner.CornerRadius = UDim.new(0, 16)
         TabCorner.Parent = TabBtn
 
-        -- Tab Icon with Glow
+        -- Icon Tab
         local TabIcon = Instance.new("ImageLabel")
         TabIcon.BackgroundTransparency = 1
         TabIcon.Position = UDim2.new(0.5, -18, 0.5, -18)
@@ -457,27 +494,13 @@ function UI.CreateWindow(config)
         TabIcon.ImageColor3 = Color3.fromRGB(180, 180, 200)
         TabIcon.Parent = TabBtn
 
-        -- Icon Glow
-        local IconGlow = Instance.new("Frame")
-        IconGlow.BackgroundColor3 = ThemeColor
-        IconGlow.BackgroundTransparency = 0.9
-        IconGlow.BorderSizePixel = 0
-        IconGlow.Position = UDim2.new(0.5, -24, 0.5, -24)
-        IconGlow.Size = UDim2.new(0, 48, 0, 48)
-        IconGlow.ZIndex = -1
-        IconGlow.Parent = TabBtn
-
-        local GlowCorner = Instance.new("UICorner")
-        GlowCorner.CornerRadius = UDim.new(1, 0)
-        GlowCorner.Parent = IconGlow
-
-        -- Tooltip with Glass Effect
+        -- Tooltip với thiết kế thủy tinh
         local Tooltip = Instance.new("TextLabel")
-        Tooltip.BackgroundColor3 = GlassColor
         Tooltip.BackgroundTransparency = 0.2
+        Tooltip.BackgroundColor3 = Color3.fromRGB(8, 8, 18)
         Tooltip.BorderSizePixel = 0
-        Tooltip.Position = UDim2.new(1, 12, 0.5, -14)
-        Tooltip.Size = UDim2.new(0, 0, 0, 28)
+        Tooltip.Position = UDim2.new(1, 12, 0.5, -12)
+        Tooltip.Size = UDim2.new(0, 0, 0, 24)
         Tooltip.Font = Enum.Font.GothamSemibold
         Tooltip.Text = tabName
         Tooltip.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -491,66 +514,70 @@ function UI.CreateWindow(config)
 
         TabBtn.MouseEnter:Connect(function()
             Tooltip.Visible = true
-            TweenService:Create(Tooltip, TweenInfo.new(0.15), {Size = UDim2.new(0, 110, 0, 28)}):Play()
-            TweenService:Create(TabBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.4}):Play()
+            TweenService:Create(Tooltip, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 120, 0, 24)
+            }):Play()
+            TweenService:Create(TabBtn, TweenInfo.new(0.15), {
+                BackgroundTransparency = 0.1
+            }):Play()
         end)
 
         TabBtn.MouseLeave:Connect(function()
-            TweenService:Create(Tooltip, TweenInfo.new(0.15), {Size = UDim2.new(0, 0, 0, 28)}):Play()
+            TweenService:Create(Tooltip, TweenInfo.new(0.15), {
+                Size = UDim2.new(0, 0, 0, 24)
+            }):Play()
             wait(0.15)
             Tooltip.Visible = false
-            TweenService:Create(TabBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.7}):Play()
+            TweenService:Create(TabBtn, TweenInfo.new(0.15), {
+                BackgroundTransparency = 0.4
+            }):Play()
         end)
 
-        -- Indicator - Glowing Line
+        -- Chỉ báo tab được chọn với hiệu ứng phát sáng
         local Indicator = Instance.new("Frame")
+        Indicator.BackgroundTransparency = 0.1
         Indicator.BackgroundColor3 = ThemeColor
-        Indicator.BackgroundTransparency = 0.3
         Indicator.BorderSizePixel = 0
-        Indicator.Position = UDim2.new(1, -4, 0, 4)
+        Indicator.Position = UDim2.new(1, -4, 0, 0)
         Indicator.Size = UDim2.new(0, 4, 0, 0)
         Indicator.Visible = false
         Indicator.Parent = TabBtn
-
-        local IndicatorCorner = Instance.new("UICorner")
-        IndicatorCorner.CornerRadius = UDim.new(0, 2)
-        IndicatorCorner.Parent = Indicator
-
-        -- Indicator Glow
-        local IndicatorGlow = Instance.new("Frame")
-        IndicatorGlow.BackgroundColor3 = ThemeColor
-        IndicatorGlow.BackgroundTransparency = 0.7
-        IndicatorGlow.BorderSizePixel = 0
-        IndicatorGlow.Position = UDim2.new(1, -8, 0, 0)
-        IndicatorGlow.Size = UDim2.new(0, 12, 1, 0)
-        IndicatorGlow.ZIndex = -1
-        IndicatorGlow.Parent = TabBtn
-
-        local GlowCorner2 = Instance.new("UICorner")
-        GlowCorner2.CornerRadius = UDim.new(0, 6)
-        GlowCorner2.Parent = IndicatorGlow
+        Indicator.ZIndex = 5
+        
+        local IndGlow = Instance.new("Frame")
+        IndGlow.BackgroundTransparency = 0.7
+        IndGlow.BackgroundColor3 = ThemeColor
+        IndGlow.BorderSizePixel = 0
+        IndGlow.Position = UDim2.new(-0.5, 0, -0.5, 0)
+        IndGlow.Size = UDim2.new(2, 0, 2, 0)
+        IndGlow.ZIndex = 0
+        IndGlow.Parent = Indicator
+        
+        local IndGlowCorner = Instance.new("UICorner")
+        IndGlowCorner.CornerRadius = UDim.new(0, 4)
+        IndGlowCorner.Parent = IndGlow
 
         local TabContent = Instance.new("ScrollingFrame")
         TabContent.BackgroundTransparency = 1
         TabContent.BorderSizePixel = 0
         TabContent.Size = UDim2.new(1, 0, 1, 0)
-        TabContent.ScrollBarThickness = 3
+        TabContent.ScrollBarThickness = 4
         TabContent.ScrollBarImageColor3 = ThemeColor
-        TabContent.ScrollBarBackgroundTransparency = 0.8
+        TabContent.ScrollBarImageTransparency = 0.5
         TabContent.Visible = false
         TabContent.Parent = ContentArea
 
         local ContentList = Instance.new("UIListLayout")
         ContentList.Parent = TabContent
         ContentList.SortOrder = Enum.SortOrder.LayoutOrder
-        ContentList.Padding = UDim.new(0, 12)
+        ContentList.Padding = UDim.new(0, 10)
 
         local ContentPad = Instance.new("UIPadding")
         ContentPad.Parent = TabContent
-        ContentPad.PaddingTop = UDim.new(0, 16)
-        ContentPad.PaddingLeft = UDim.new(0, 16)
-        ContentPad.PaddingRight = UDim.new(0, 16)
-        ContentPad.PaddingBottom = UDim.new(0, 16)
+        ContentPad.PaddingTop = UDim.new(0, 14)
+        ContentPad.PaddingLeft = UDim.new(0, 14)
+        ContentPad.PaddingRight = UDim.new(0, 14)
+        ContentPad.PaddingBottom = UDim.new(0, 14)
 
         local Tab = {
             Name = tabName,
@@ -562,15 +589,28 @@ function UI.CreateWindow(config)
         TabBtn.MouseButton1Click:Connect(function()
             for _, t in pairs(Window.Tabs) do
                 t.Content.Visible = false
-                t.Button:FindFirstChild("Frame").Visible = false
-                t.Button:FindFirstChild("ImageLabel").ImageColor3 = Color3.fromRGB(180, 180, 200)
-                TweenService:Create(t.Button, TweenInfo.new(0.15), {BackgroundTransparency = 0.7}):Play()
+                local ind = t.Button:FindFirstChild("Frame")
+                if ind then
+                    ind.Visible = false
+                    ind.Size = UDim2.new(0, 4, 0, 0)
+                end
+                local img = t.Button:FindFirstChild("ImageLabel")
+                if img then
+                    img.ImageColor3 = Color3.fromRGB(180, 180, 200)
+                end
+                TweenService:Create(t.Button, TweenInfo.new(0.15), {
+                    BackgroundTransparency = 0.4
+                }):Play()
             end
             TabContent.Visible = true
             Indicator.Visible = true
-            TweenService:Create(Indicator, TweenInfo.new(0.2), {Size = UDim2.new(0, 4, 1, -8)}):Play()
+            TweenService:Create(Indicator, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 4, 1, 0)
+            }):Play()
             TabIcon.ImageColor3 = ThemeColor
-            TweenService:Create(TabBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.3}):Play()
+            TweenService:Create(TabBtn, TweenInfo.new(0.15), {
+                BackgroundTransparency = 0.1
+            }):Play()
         end)
 
         table.insert(Window.Tabs, Tab)
@@ -579,9 +619,8 @@ function UI.CreateWindow(config)
             wait()
             TabContent.Visible = true
             Indicator.Visible = true
-            Indicator.Size = UDim2.new(0, 4, 1, -8)
+            Indicator.Size = UDim2.new(0, 4, 1, 0)
             TabIcon.ImageColor3 = ThemeColor
-            TweenService:Create(TabBtn, TweenInfo.new(0.15), {BackgroundTransparency = 0.3}):Play()
         end
 
         function Tab:AddSection(sname)
@@ -594,51 +633,42 @@ function UI.CreateWindow(config)
             SectionFrame.Parent = TabContent
 
             local SectionHead = Instance.new("TextLabel")
-            SectionHead.BackgroundColor3 = GlassColor
-            SectionHead.BackgroundTransparency = 0.2
+            SectionHead.BackgroundTransparency = 0.3
+            SectionHead.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
             SectionHead.BorderSizePixel = 0
-            SectionHead.Size = UDim2.new(1, 0, 0, 28)
+            SectionHead.Size = UDim2.new(1, 0, 0, 30)
             SectionHead.Font = Enum.Font.GothamBold
             SectionHead.Text = "✦ " .. sname
             SectionHead.TextColor3 = ThemeColor
-            SectionHead.TextSize = 12
+            SectionHead.TextSize = 13
             SectionHead.TextXAlignment = Enum.TextXAlignment.Left
             SectionHead.Parent = SectionFrame
 
             local HeadCorner = Instance.new("UICorner")
-            HeadCorner.CornerRadius = UDim.new(0, 10)
+            HeadCorner.CornerRadius = UDim.new(0, 12)
             HeadCorner.Parent = SectionHead
-
-            -- Section line
-            local SectionLine = Instance.new("Frame")
-            SectionLine.BackgroundColor3 = ThemeColor
-            SectionLine.BackgroundTransparency = 0.7
-            SectionLine.BorderSizePixel = 0
-            SectionLine.Position = UDim2.new(0.3, 0, 0.5, 0)
-            SectionLine.Size = UDim2.new(0.65, 0, 0, 1)
-            SectionLine.Parent = SectionHead
 
             local SectionContent = Instance.new("Frame")
             SectionContent.BackgroundTransparency = 1
             SectionContent.BorderSizePixel = 0
-            SectionContent.Position = UDim2.new(0, 0, 0, 28)
+            SectionContent.Position = UDim2.new(0, 0, 0, 34)
             SectionContent.Size = UDim2.new(1, 0, 0, 0)
             SectionContent.Parent = SectionFrame
 
             local ContentListLayout = Instance.new("UIListLayout")
             ContentListLayout.Parent = SectionContent
             ContentListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            ContentListLayout.Padding = UDim.new(0, 8)
+            ContentListLayout.Padding = UDim.new(0, 6)
 
             function Section:AddToggle(tname, opts)
                 opts = opts or {}
                 local toggled = opts.Default or false
 
                 local ToggleF = Instance.new("TextButton")
-                ToggleF.BackgroundColor3 = GlassColor
-                ToggleF.BackgroundTransparency = 0.5
+                ToggleF.BackgroundTransparency = 0.3
+                ToggleF.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
                 ToggleF.BorderSizePixel = 0
-                ToggleF.Size = UDim2.new(1, 0, 0, 40)
+                ToggleF.Size = UDim2.new(1, 0, 0, 38)
                 ToggleF.Text = ""
                 ToggleF.Parent = SectionContent
 
@@ -648,23 +678,22 @@ function UI.CreateWindow(config)
 
                 local ToggleL = Instance.new("TextLabel")
                 ToggleL.BackgroundTransparency = 1
-                ToggleL.Position = UDim2.new(0, 14, 0, 0)
-                ToggleL.Size = UDim2.new(1, -70, 1, 0)
+                ToggleL.Position = UDim2.new(0, 12, 0, 0)
+                ToggleL.Size = UDim2.new(1, -65, 1, 0)
                 ToggleL.Font = Enum.Font.Gotham
                 ToggleL.Text = opts.Text or tname
-                ToggleL.TextColor3 = Color3.fromRGB(255, 255, 255)
+                ToggleL.TextColor3 = Color3.fromRGB(235, 235, 240)
                 ToggleL.TextSize = 12
                 ToggleL.TextXAlignment = Enum.TextXAlignment.Left
                 ToggleL.Parent = ToggleF
                 ToggleL.ZIndex = 2
 
-                -- Toggle Switch - Premium Style
                 local ToggleS = Instance.new("Frame")
-                ToggleS.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-                ToggleS.BackgroundTransparency = 0.5
+                ToggleS.BackgroundTransparency = 0.3
+                ToggleS.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
                 ToggleS.BorderSizePixel = 0
-                ToggleS.Position = UDim2.new(1, -54, 0.5, -12)
-                ToggleS.Size = UDim2.new(0, 44, 0, 24)
+                ToggleS.Position = UDim2.new(1, -50, 0.5, -10)
+                ToggleS.Size = UDim2.new(0, 40, 0, 20)
                 ToggleS.Parent = ToggleF
                 ToggleS.ZIndex = 2
 
@@ -673,11 +702,11 @@ function UI.CreateWindow(config)
                 ToggleSC.Parent = ToggleS
 
                 local ToggleInd = Instance.new("Frame")
-                ToggleInd.BackgroundColor3 = Color3.fromRGB(150, 150, 170)
-                ToggleInd.BackgroundTransparency = 0.3
+                ToggleInd.BackgroundTransparency = 0.2
+                ToggleInd.BackgroundColor3 = Color3.fromRGB(100, 100, 120)
                 ToggleInd.BorderSizePixel = 0
-                ToggleInd.Position = UDim2.new(0, 3, 0.5, -9)
-                ToggleInd.Size = UDim2.new(0, 18, 0, 18)
+                ToggleInd.Position = UDim2.new(0, 2, 0.5, -8)
+                ToggleInd.Size = UDim2.new(0, 16, 0, 16)
                 ToggleInd.Parent = ToggleS
                 ToggleInd.ZIndex = 3
 
@@ -685,47 +714,27 @@ function UI.CreateWindow(config)
                 IndCorner.CornerRadius = UDim.new(1, 0)
                 IndCorner.Parent = ToggleInd
 
-                -- Toggle Glow
-                local ToggleGlow = Instance.new("Frame")
-                ToggleGlow.BackgroundColor3 = ThemeColor
-                ToggleGlow.BackgroundTransparency = 0.8
-                ToggleGlow.BorderSizePixel = 0
-                ToggleGlow.Position = UDim2.new(0, -6, 0, -6)
-                ToggleGlow.Size = UDim2.new(1, 12, 1, 12)
-                ToggleGlow.ZIndex = 1
-                ToggleGlow.Parent = ToggleS
-
-                local GlowCorner3 = Instance.new("UICorner")
-                GlowCorner3.CornerRadius = UDim.new(1, 0)
-                GlowCorner3.Parent = ToggleGlow
-
                 local function UpdateToggle(state)
                     toggled = state
                     if toggled then
-                        TweenService:Create(ToggleInd, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
-                            Position = UDim2.new(1, -21, 0.5, -9),
+                        TweenService:Create(ToggleInd, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                            Position = UDim2.new(1, -18, 0.5, -8),
                             BackgroundColor3 = ThemeColor,
                             BackgroundTransparency = 0
                         }):Play()
-                        TweenService:Create(ToggleS, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
+                        TweenService:Create(ToggleS, TweenInfo.new(0.2), {
                             BackgroundColor3 = ThemeColor,
-                            BackgroundTransparency = 0.3
-                        }):Play()
-                        TweenService:Create(ToggleGlow, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
-                            BackgroundTransparency = 0.5
+                            BackgroundTransparency = 0.2
                         }):Play()
                     else
-                        TweenService:Create(ToggleInd, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
-                            Position = UDim2.new(0, 3, 0.5, -9),
-                            BackgroundColor3 = Color3.fromRGB(150, 150, 170),
+                        TweenService:Create(ToggleInd, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                            Position = UDim2.new(0, 2, 0.5, -8),
+                            BackgroundColor3 = Color3.fromRGB(100, 100, 120),
+                            BackgroundTransparency = 0.2
+                        }):Play()
+                        TweenService:Create(ToggleS, TweenInfo.new(0.2), {
+                            BackgroundColor3 = Color3.fromRGB(35, 35, 45),
                             BackgroundTransparency = 0.3
-                        }):Play()
-                        TweenService:Create(ToggleS, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
-                            BackgroundColor3 = Color3.fromRGB(60, 60, 80),
-                            BackgroundTransparency = 0.5
-                        }):Play()
-                        TweenService:Create(ToggleGlow, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
-                            BackgroundTransparency = 0.8
                         }):Play()
                     end
                     if opts.Callback then opts.Callback(toggled) end
@@ -733,14 +742,6 @@ function UI.CreateWindow(config)
 
                 ToggleF.MouseButton1Click:Connect(function()
                     UpdateToggle(not toggled)
-                end)
-
-                ToggleF.MouseEnter:Connect(function()
-                    TweenService:Create(ToggleF, TweenInfo.new(0.15), {BackgroundTransparency = 0.3}):Play()
-                end)
-
-                ToggleF.MouseLeave:Connect(function()
-                    TweenService:Create(ToggleF, TweenInfo.new(0.15), {BackgroundTransparency = 0.5}):Play()
                 end)
 
                 UpdateToggle(toggled)
@@ -751,10 +752,10 @@ function UI.CreateWindow(config)
             function Section:AddButton(bname, opts)
                 opts = opts or {}
                 local Btn = Instance.new("TextButton")
+                Btn.BackgroundTransparency = 0.4
                 Btn.BackgroundColor3 = ThemeColor
-                Btn.BackgroundTransparency = 0.5
                 Btn.BorderSizePixel = 0
-                Btn.Size = UDim2.new(1, 0, 0, 38)
+                Btn.Size = UDim2.new(1, 0, 0, 35)
                 Btn.Font = Enum.Font.GothamSemibold
                 Btn.Text = opts.Text or bname
                 Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -765,34 +766,35 @@ function UI.CreateWindow(config)
                 BtnC.CornerRadius = UDim.new(0, 12)
                 BtnC.Parent = Btn
 
-                -- Button Glow
-                local BtnGlow = Instance.new("Frame")
-                BtnGlow.BackgroundColor3 = ThemeColor
-                BtnGlow.BackgroundTransparency = 0.8
-                BtnGlow.BorderSizePixel = 0
-                BtnGlow.Position = UDim2.new(0, -4, 0, -4)
-                BtnGlow.Size = UDim2.new(1, 8, 1, 8)
-                BtnGlow.ZIndex = -1
-                BtnGlow.Parent = Btn
-
-                local GlowCorner4 = Instance.new("UICorner")
-                GlowCorner4.CornerRadius = UDim.new(0, 14)
-                GlowCorner4.Parent = BtnGlow
-
                 Btn.MouseEnter:Connect(function()
-                    TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.2}):Play()
-                    TweenService:Create(BtnGlow, TweenInfo.new(0.15), {BackgroundTransparency = 0.5}):Play()
+                    TweenService:Create(Btn, TweenInfo.new(0.15), {
+                        BackgroundTransparency = 0.1,
+                        Size = UDim2.new(1, 4, 0, 37)
+                    }):Play()
                 end)
 
                 Btn.MouseLeave:Connect(function()
-                    TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.5}):Play()
-                    TweenService:Create(BtnGlow, TweenInfo.new(0.15), {BackgroundTransparency = 0.8}):Play()
+                    TweenService:Create(Btn, TweenInfo.new(0.15), {
+                        BackgroundTransparency = 0.4,
+                        Size = UDim2.new(1, 0, 0, 35)
+                    }):Play()
                 end)
 
                 Btn.MouseButton1Click:Connect(function()
-                    TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.7}):Play()
+                    TweenService:Create(Btn, TweenInfo.new(0.1), {
+                        BackgroundTransparency = 0.6,
+                        Size = UDim2.new(1, -4, 0, 33)
+                    }):Play()
                     wait(0.1)
-                    TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.2}):Play()
+                    TweenService:Create(Btn, TweenInfo.new(0.1), {
+                        BackgroundTransparency = 0.1,
+                        Size = UDim2.new(1, 4, 0, 37)
+                    }):Play()
+                    wait(0.1)
+                    TweenService:Create(Btn, TweenInfo.new(0.1), {
+                        BackgroundTransparency = 0.4,
+                        Size = UDim2.new(1, 0, 0, 35)
+                    }):Play()
                     if opts.Callback then opts.Callback() end
                 end)
 
@@ -805,10 +807,10 @@ function UI.CreateWindow(config)
                 local val = default
 
                 local SliderF = Instance.new("Frame")
-                SliderF.BackgroundColor3 = GlassColor
-                SliderF.BackgroundTransparency = 0.5
+                SliderF.BackgroundTransparency = 0.3
+                SliderF.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
                 SliderF.BorderSizePixel = 0
-                SliderF.Size = UDim2.new(1, 0, 0, 72)
+                SliderF.Size = UDim2.new(1, 0, 0, 68)
                 SliderF.Parent = SectionContent
 
                 local SliderFC = Instance.new("UICorner")
@@ -817,20 +819,20 @@ function UI.CreateWindow(config)
 
                 local SliderL = Instance.new("TextLabel")
                 SliderL.BackgroundTransparency = 1
-                SliderL.Position = UDim2.new(0, 14, 0, 8)
+                SliderL.Position = UDim2.new(0, 12, 0, 6)
                 SliderL.Size = UDim2.new(1, -60, 0, 18)
                 SliderL.Font = Enum.Font.GothamSemibold
                 SliderL.Text = (opts.Text or slname) .. ": " .. tostring(val)
-                SliderL.TextColor3 = Color3.fromRGB(235, 235, 245)
+                SliderL.TextColor3 = Color3.fromRGB(235, 235, 240)
                 SliderL.TextSize = 12
                 SliderL.TextXAlignment = Enum.TextXAlignment.Left
                 SliderL.Parent = SliderF
 
                 local InputB = Instance.new("TextBox")
-                InputB.BackgroundColor3 = GlassColor
                 InputB.BackgroundTransparency = 0.4
+                InputB.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
                 InputB.BorderSizePixel = 0
-                InputB.Position = UDim2.new(1, -56, 0, 8)
+                InputB.Position = UDim2.new(1, -52, 0, 6)
                 InputB.Size = UDim2.new(0, 48, 0, 18)
                 InputB.Font = Enum.Font.Gotham
                 InputB.Text = tostring(val)
@@ -839,15 +841,15 @@ function UI.CreateWindow(config)
                 InputB.Parent = SliderF
 
                 local InputBC = Instance.new("UICorner")
-                InputBC.CornerRadius = UDim.new(0, 6)
+                InputBC.CornerRadius = UDim.new(0, 8)
                 InputBC.Parent = InputB
 
                 local SliderB = Instance.new("Frame")
-                SliderB.BackgroundColor3 = GlassColor
-                SliderB.BackgroundTransparency = 0.6
+                SliderB.BackgroundTransparency = 0.4
+                SliderB.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
                 SliderB.BorderSizePixel = 0
-                SliderB.Position = UDim2.new(0, 14, 0, 36)
-                SliderB.Size = UDim2.new(1, -28, 0, 14)
+                SliderB.Position = UDim2.new(0, 12, 0, 32)
+                SliderB.Size = UDim2.new(1, -24, 0, 12)
                 SliderB.Parent = SliderF
 
                 local SliderBC = Instance.new("UICorner")
@@ -855,8 +857,8 @@ function UI.CreateWindow(config)
                 SliderBC.Parent = SliderB
 
                 local SliderFill = Instance.new("Frame")
+                SliderFill.BackgroundTransparency = 0.1
                 SliderFill.BackgroundColor3 = ThemeColor
-                SliderFill.BackgroundTransparency = 0.2
                 SliderFill.BorderSizePixel = 0
                 SliderFill.Size = UDim2.new((val - min) / (max - min), 0, 1, 0)
                 SliderFill.Parent = SliderB
@@ -865,45 +867,17 @@ function UI.CreateWindow(config)
                 SliderFillC.CornerRadius = UDim.new(1, 0)
                 SliderFillC.Parent = SliderFill
 
-                -- Fill Glow
-                local FillGlow = Instance.new("Frame")
-                FillGlow.BackgroundColor3 = ThemeColor
-                FillGlow.BackgroundTransparency = 0.6
-                FillGlow.BorderSizePixel = 0
-                FillGlow.Position = UDim2.new(0, 0, 0, -4)
-                FillGlow.Size = UDim2.new(1, 0, 1, 8)
-                FillGlow.ZIndex = -1
-                FillGlow.Parent = SliderFill
-
-                local FillGlowCorner = Instance.new("UICorner")
-                FillGlowCorner.CornerRadius = UDim.new(1, 0)
-                FillGlowCorner.Parent = FillGlow
-
                 local Thumb = Instance.new("Frame")
+                Thumb.BackgroundTransparency = 0.1
                 Thumb.BackgroundColor3 = ThemeColor
-                Thumb.BackgroundTransparency = 0
                 Thumb.BorderSizePixel = 0
-                Thumb.Position = UDim2.new((val - min) / (max - min), -7, 0.5, -7)
-                Thumb.Size = UDim2.new(0, 14, 0, 14)
+                Thumb.Position = UDim2.new((val - min) / (max - min), -6, 0.5, -6)
+                Thumb.Size = UDim2.new(0, 12, 0, 12)
                 Thumb.Parent = SliderB
 
                 local ThumbC = Instance.new("UICorner")
                 ThumbC.CornerRadius = UDim.new(1, 0)
                 ThumbC.Parent = Thumb
-
-                -- Thumb Glow
-                local ThumbGlow = Instance.new("Frame")
-                ThumbGlow.BackgroundColor3 = ThemeColor
-                ThumbGlow.BackgroundTransparency = 0.7
-                ThumbGlow.BorderSizePixel = 0
-                ThumbGlow.Position = UDim2.new(0, -6, 0, -6)
-                ThumbGlow.Size = UDim2.new(1, 12, 1, 12)
-                ThumbGlow.ZIndex = -1
-                ThumbGlow.Parent = Thumb
-
-                local ThumbGlowCorner = Instance.new("UICorner")
-                ThumbGlowCorner.CornerRadius = UDim.new(1, 0)
-                ThumbGlowCorner.Parent = ThumbGlow
 
                 local dragging = false
 
@@ -912,8 +886,7 @@ function UI.CreateWindow(config)
                     val = math.floor((min + (max - min) * pos) / increment + 0.5) * increment
                     val = math.clamp(val, min, max)
                     SliderFill.Size = UDim2.new((val - min) / (max - min), 0, 1, 0)
-                    FillGlow.Size = UDim2.new((val - min) / (max - min), 0, 1, 8)
-                    Thumb.Position = UDim2.new((val - min) / (max - min), -7, 0.5, -7)
+                    Thumb.Position = UDim2.new((val - min) / (max - min), -6, 0.5, -6)
                     SliderL.Text = (opts.Text or slname) .. ": " .. tostring(val)
                     InputB.Text = tostring(val)
                     if opts.Callback then opts.Callback(val) end
@@ -940,22 +913,14 @@ function UI.CreateWindow(config)
                     if v then
                         val = math.clamp(v, min, max)
                         SliderFill.Size = UDim2.new((val - min) / (max - min), 0, 1, 0)
-                        FillGlow.Size = UDim2.new((val - min) / (max - min), 0, 1, 8)
-                        Thumb.Position = UDim2.new((val - min) / (max - min), -7, 0.5, -7)
+                        Thumb.Position = UDim2.new((val - min) / (max - min), -6, 0.5, -6)
                         SliderL.Text = (opts.Text or slname) .. ": " .. tostring(val)
                         InputB.Text = tostring(val)
                         if opts.Callback then opts.Callback(val) end
                     else InputB.Text = tostring(val) end
                 end)
 
-                return {SetValue = function(self, v) 
-                    val = math.clamp(v, min, max)
-                    SliderFill.Size = UDim2.new((val - min) / (max - min), 0, 1, 0)
-                    FillGlow.Size = UDim2.new((val - min) / (max - min), 0, 1, 8)
-                    Thumb.Position = UDim2.new((val - min) / (max - min), -7, 0.5, -7)
-                    SliderL.Text = (opts.Text or slname) .. ": " .. tostring(val)
-                    InputB.Text = tostring(val)
-                end, GetValue = function(self) return val end}
+                return {SetValue = function(self, v) val = math.clamp(v, min, max); SliderFill.Size = UDim2.new((val - min) / (max - min), 0, 1, 0); Thumb.Position = UDim2.new((val - min) / (max - min), -6, 0.5, -6); SliderL.Text = (opts.Text or slname) .. ": " .. tostring(val); InputB.Text = tostring(val) end, GetValue = function(self) return val end}
             end
 
             function Section:AddDropdown(dname, opts)
@@ -964,10 +929,10 @@ function UI.CreateWindow(config)
                 local current = opts.Default or (items[1] or "None")
 
                 local DropF = Instance.new("Frame")
-                DropF.BackgroundColor3 = GlassColor
-                DropF.BackgroundTransparency = 0.5
+                DropF.BackgroundTransparency = 0.3
+                DropF.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
                 DropF.BorderSizePixel = 0
-                DropF.Size = UDim2.new(1, 0, 0, 38)
+                DropF.Size = UDim2.new(1, 0, 0, 36)
                 DropF.Parent = SectionContent
 
                 local DropFC = Instance.new("UICorner")
@@ -982,81 +947,81 @@ function UI.CreateWindow(config)
 
                 local DropL = Instance.new("TextLabel")
                 DropL.BackgroundTransparency = 1
-                DropL.Position = UDim2.new(0, 14, 0, 0)
-                DropL.Size = UDim2.new(1, -50, 1, 0)
+                DropL.Position = UDim2.new(0, 12, 0, 0)
+                DropL.Size = UDim2.new(1, -45, 1, 0)
                 DropL.Font = Enum.Font.Gotham
                 DropL.Text = current
-                DropL.TextColor3 = Color3.fromRGB(235, 235, 245)
+                DropL.TextColor3 = Color3.fromRGB(235, 235, 240)
                 DropL.TextSize = 12
                 DropL.TextXAlignment = Enum.TextXAlignment.Left
                 DropL.Parent = DropF
 
                 local DropArrow = Instance.new("TextLabel")
                 DropArrow.BackgroundTransparency = 1
-                DropArrow.Position = UDim2.new(1, -32, 0, 0)
+                DropArrow.Position = UDim2.new(1, -30, 0, 0)
                 DropArrow.Size = UDim2.new(0, 30, 1, 0)
                 DropArrow.Font = Enum.Font.GothamBold
-                DropArrow.Text = "▼"
+                DropArrow.Text = "▾"
                 DropArrow.TextColor3 = ThemeColor
-                DropArrow.TextSize = 10
+                DropArrow.TextSize = 12
                 DropArrow.Parent = DropF
 
                 local ItemC = Instance.new("Frame")
-                ItemC.BackgroundColor3 = GlassColor
                 ItemC.BackgroundTransparency = 0.3
+                ItemC.BackgroundColor3 = Color3.fromRGB(8, 8, 18)
                 ItemC.BorderSizePixel = 0
-                ItemC.Position = UDim2.new(0, 0, 1, 4)
+                ItemC.Position = UDim2.new(0, 0, 1, 0)
                 ItemC.Size = UDim2.new(1, 0, 0, 0)
                 ItemC.Visible = false
                 ItemC.Parent = DropF
+                ItemC.ZIndex = 10
 
-                local ItemCorner = Instance.new("UICorner")
-                ItemCorner.CornerRadius = UDim.new(0, 10)
-                ItemCorner.Parent = ItemC
+                local ItemCCorner = Instance.new("UICorner")
+                ItemCCorner.CornerRadius = UDim.new(0, 12)
+                ItemCCorner.Parent = ItemC
 
                 local isOpen = false
 
                 DropBtn.MouseButton1Click:Connect(function()
                     isOpen = not isOpen
                     ItemC.Visible = isOpen
-                    TweenService:Create(ItemC, TweenInfo.new(0.2), {
-                        Size = isOpen and UDim2.new(1, 0, 0, 32 + (#items * 34)) or UDim2.new(1, 0, 0, 0)
-                    }):Play()
+                    ItemC.Size = isOpen and UDim2.new(1, 0, 0, 8 + (#items * 32)) or UDim2.new(1, 0, 0, 0)
                 end)
 
                 for i, item in ipairs(items) do
                     local ItemBtn = Instance.new("TextButton")
-                    ItemBtn.BackgroundColor3 = GlassColor
-                    ItemBtn.BackgroundTransparency = 0.6
+                    ItemBtn.BackgroundTransparency = 0.5
+                    ItemBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
                     ItemBtn.BorderSizePixel = 0
-                    ItemBtn.Position = UDim2.new(0, 0, 0, 32 + (i-1) * 34)
-                    ItemBtn.Size = UDim2.new(1, 0, 0, 34)
+                    ItemBtn.Position = UDim2.new(0, 0, 0, 4 + (i-1) * 32)
+                    ItemBtn.Size = UDim2.new(1, 0, 0, 32)
                     ItemBtn.Font = Enum.Font.Gotham
                     ItemBtn.Text = item
-                    ItemBtn.TextColor3 = Color3.fromRGB(200, 200, 220)
+                    ItemBtn.TextColor3 = Color3.fromRGB(200, 200, 210)
                     ItemBtn.TextSize = 11
                     ItemBtn.Parent = ItemC
-
-                    local ItemBtnCorner = Instance.new("UICorner")
-                    ItemBtnCorner.CornerRadius = UDim.new(0, 8)
-                    ItemBtnCorner.Parent = ItemBtn
 
                     ItemBtn.MouseButton1Click:Connect(function()
                         current = item
                         DropL.Text = item
                         isOpen = false
-                        TweenService:Create(ItemC, TweenInfo.new(0.15), {Size = UDim2.new(1, 0, 0, 0)}):Play()
-                        wait(0.15)
+                        ItemC.Size = UDim2.new(1, 0, 0, 0)
                         ItemC.Visible = false
                         if opts.Callback then opts.Callback(item) end
                     end)
 
                     ItemBtn.MouseEnter:Connect(function()
-                        TweenService:Create(ItemBtn, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
+                        TweenService:Create(ItemBtn, TweenInfo.new(0.1), {
+                            BackgroundTransparency = 0.2,
+                            BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+                        }):Play()
                     end)
 
                     ItemBtn.MouseLeave:Connect(function()
-                        TweenService:Create(ItemBtn, TweenInfo.new(0.1), {BackgroundTransparency = 0.6}):Play()
+                        TweenService:Create(ItemBtn, TweenInfo.new(0.1), {
+                            BackgroundTransparency = 0.5,
+                            BackgroundColor3 = Color3.fromRGB(18, 18, 28)
+                        }):Play()
                     end)
                 end
 
@@ -1068,10 +1033,10 @@ function UI.CreateWindow(config)
                 local text = opts.Default or ""
 
                 local TBF = Instance.new("Frame")
-                TBF.BackgroundColor3 = GlassColor
-                TBF.BackgroundTransparency = 0.5
+                TBF.BackgroundTransparency = 0.3
+                TBF.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
                 TBF.BorderSizePixel = 0
-                TBF.Size = UDim2.new(1, 0, 0, 68)
+                TBF.Size = UDim2.new(1, 0, 0, 65)
                 TBF.Parent = SectionContent
 
                 local TBFC = Instance.new("UICorner")
@@ -1080,21 +1045,21 @@ function UI.CreateWindow(config)
 
                 local TBL = Instance.new("TextLabel")
                 TBL.BackgroundTransparency = 1
-                TBL.Position = UDim2.new(0, 14, 0, 8)
-                TBL.Size = UDim2.new(1, -28, 0, 18)
+                TBL.Position = UDim2.new(0, 12, 0, 6)
+                TBL.Size = UDim2.new(1, -24, 0, 18)
                 TBL.Font = Enum.Font.GothamSemibold
                 TBL.Text = opts.Text or tbname
-                TBL.TextColor3 = Color3.fromRGB(235, 235, 245)
+                TBL.TextColor3 = Color3.fromRGB(235, 235, 240)
                 TBL.TextSize = 12
                 TBL.TextXAlignment = Enum.TextXAlignment.Left
                 TBL.Parent = TBF
 
                 local TB = Instance.new("TextBox")
-                TB.BackgroundColor3 = GlassColor
                 TB.BackgroundTransparency = 0.4
+                TB.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
                 TB.BorderSizePixel = 0
-                TB.Position = UDim2.new(0, 14, 0, 30)
-                TB.Size = UDim2.new(1, -28, 0, 28)
+                TB.Position = UDim2.new(0, 12, 0, 28)
+                TB.Size = UDim2.new(1, -24, 0, 28)
                 TB.Font = Enum.Font.Gotham
                 TB.Text = text
                 TB.PlaceholderText = opts.Placeholder or ""
@@ -1104,12 +1069,12 @@ function UI.CreateWindow(config)
                 TB.Parent = TBF
 
                 local TBC = Instance.new("UICorner")
-                TBC.CornerRadius = UDim.new(0, 8)
+                TBC.CornerRadius = UDim.new(0, 10)
                 TBC.Parent = TB
 
-                TB.FocusLost:Connect(function()
+                TB.FocusLost:Connect(function(enterPressed)
                     text = TB.Text
-                    if opts.Callback then opts.Callback(text) end
+                    if opts.Callback then opts.Callback(text, enterPressed) end
                 end)
 
                 return {SetValue = function(self, v) text = v; TB.Text = v end, GetValue = function(self) return text end}
@@ -1118,9 +1083,9 @@ function UI.CreateWindow(config)
             local function UpdateSize()
                 local height = 0
                 for _, child in ipairs(SectionContent:GetChildren()) do
-                    if child:IsA("GuiObject") then height = height + child.AbsoluteSize.Y + 8 end
+                    if child:IsA("GuiObject") then height = height + child.AbsoluteSize.Y + 6 end
                 end
-                SectionFrame.Size = UDim2.new(1, 0, 0, height + 28)
+                SectionFrame.Size = UDim2.new(1, 0, 0, height + 34)
             end
 
             ContentList.Changed:Connect(function()
