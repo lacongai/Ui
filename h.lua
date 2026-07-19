@@ -176,7 +176,7 @@ function GUILib:_Build()
 	shadow.BackgroundTransparency = 1
 	shadow.Image = "rbxassetid://6014261993"
 	shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-	shadow.ImageTransparency = 0
+	shadow.ImageTransparency = 0.35
 	shadow.ScaleType = Enum.ScaleType.Slice
 	shadow.SliceCenter = Rect.new(99, 99, 99, 99)
 	shadow.ZIndex = 0
@@ -189,7 +189,7 @@ function GUILib:_Build()
 	glow.BackgroundTransparency = 1
 	glow.Image = "rbxassetid://6014261993"
 	glow.ImageColor3 = self.AccentColor
-	glow.ImageTransparency = 0
+	glow.ImageTransparency = 0.82
 	glow.ScaleType = Enum.ScaleType.Slice
 	glow.SliceCenter = Rect.new(99, 99, 99, 99)
 	glow.ZIndex = 0
