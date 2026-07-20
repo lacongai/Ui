@@ -370,8 +370,8 @@ function GUILib.new(config)
     self.GlassTransparency = config.Transparency or 0.16
     self.ToggleKey = config.ToggleKey or Enum.KeyCode.RightShift
     
-    -- Mặc định KHÔNG có hiệu ứng màu
-    self.ColorMode = "none" -- Luôn là "none" khi tạo mới
+    -- Đọc ColorMode từ config (mặc định "none")
+    self.ColorMode = config.ColorMode or "none"
     self.RainbowEffect = nil
 
     self.Tabs = {}
@@ -379,8 +379,13 @@ function GUILib.new(config)
 
     self:_Build()
     
-    -- KHÔNG tự động bật hiệu ứng
-    -- Người dùng phải gọi window:StartColorEffect("rainbow") hoặc "random" để bật
+    -- Tự động bật hiệu ứng nếu config yêu cầu
+    if self.ColorMode ~= "none" then
+        task.spawn(function()
+            task.wait(0.1)
+            self:StartColorEffect(self.ColorMode)
+        end)
+    end
 
     return self
 end
