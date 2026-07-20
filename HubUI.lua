@@ -343,41 +343,53 @@ function GUILib:_Build()
 	-- Dùng ScrollingFrame (không phải Frame thường) để KHÔNG BAO GIỜ bị
 	-- giới hạn số lượng tab: dù thêm 2, 5, hay 20 tab, danh sách sẽ tự
 	-- cuộn thay vì bị cắt mất bởi MainFrame.ClipsDescendants.
-	local tabBar = Instance.new("ScrollingFrame")
-	tabBar.Name = "TabBar"
-	tabBar.Size = UDim2.new(0, 104, 1, -38)
-	tabBar.Position = UDim2.new(0, 0, 0, 38)
-	tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.22)
-	tabBar.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
-	tabBar.BorderSizePixel = 0
-	tabBar.ScrollBarThickness = 3
-	tabBar.ScrollBarImageColor3 = self.AccentColor
-	tabBar.ScrollingDirection = Enum.ScrollingDirection.Y
-	tabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
-	tabBar.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	tabBar.Parent = main
-	self.TabBar = tabBar
+	-- Thanh Tab (bên trái) - DÙNG FRAME THƯỜNG (không bị lỗi cuộn)
+local tabBar = Instance.new("Frame")
+tabBar.Name = "TabBar"
+tabBar.Size = UDim2.new(0, 104, 1, -38)
+tabBar.Position = UDim2.new(0, 0, 0, 38)
+tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.22)
+tabBar.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
+tabBar.BorderSizePixel = 0
+tabBar.ClipsDescendants = true
+tabBar.Parent = main
+self.TabBar = tabBar
 
-	local tabBarLine = Instance.new("Frame")
-	tabBarLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	tabBarLine.BackgroundTransparency = 0.92
-	tabBarLine.BorderSizePixel = 0
-	tabBarLine.Position = UDim2.new(1, -1, 0, 0)
-	tabBarLine.Size = UDim2.new(0, 1, 1, 0)
-	tabBarLine.ZIndex = 3
-	tabBarLine.Parent = tabBar
+local tabBarLine = Instance.new("Frame")
+tabBarLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+tabBarLine.BackgroundTransparency = 0.92
+tabBarLine.BorderSizePixel = 0
+tabBarLine.Position = UDim2.new(1, -1, 0, 0)
+tabBarLine.Size = UDim2.new(0, 1, 1, 0)
+tabBarLine.ZIndex = 3
+tabBarLine.Parent = tabBar
 
-	local tabList = Instance.new("UIListLayout")
-	tabList.Padding = UDim.new(0, 4)
-	tabList.SortOrder = Enum.SortOrder.LayoutOrder
-	tabList.Parent = tabBar
+local tabList = Instance.new("UIListLayout")
+tabList.Padding = UDim.new(0, 4)
+tabList.SortOrder = Enum.SortOrder.LayoutOrder
+tabList.Parent = tabBar
 
-	local tabPadding = Instance.new("UIPadding")
-	tabPadding.PaddingTop = UDim.new(0, 8)
-	tabPadding.PaddingLeft = UDim.new(0, 6)
-	tabPadding.PaddingRight = UDim.new(0, 6)
-	tabPadding.PaddingBottom = UDim.new(0, 8)
-	tabPadding.Parent = tabBar
+local tabPadding = Instance.new("UIPadding")
+tabPadding.PaddingTop = UDim.new(0, 8)
+tabPadding.PaddingLeft = UDim.new(0, 6)
+tabPadding.PaddingRight = UDim.new(0, 6)
+tabPadding.PaddingBottom = UDim.new(0, 8)
+tabPadding.Parent = tabBar
+
+-- ✅ Đồng bộ kích thước tab bar khi thay đổi
+local function updateTabBarSize()
+    local totalHeight = 16 -- padding
+    for _, child in ipairs(tabBar:GetChildren()) do
+        if child:IsA("TextButton") then
+            totalHeight = totalHeight + child.Size.Y.Offset + 4
+        end
+    end
+    tabBar.Size = UDim2.new(0, 104, 1, -38)
+end
+
+tabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabBarSize)
+task.wait(0.1)
+updateTabBarSize()
 
 	-- Vùng nội dung (bên phải)
 	local content = Instance.new("Frame")
