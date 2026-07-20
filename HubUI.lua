@@ -345,7 +345,7 @@ function GUILib:_Build()
 	-- cuộn thay vì bị cắt mất bởi MainFrame.ClipsDescendants.
 	local tabBar = Instance.new("ScrollingFrame")
 	tabBar.Name = "TabBar"
-	tabBar.Size = UDim2.new(0, 104, 1, -38)
+	tabBar.Size = UDim2.new(0, 90, 1, -38)  -- Giảm từ 104 xuống 90
 	tabBar.Position = UDim2.new(0, 0, 0, 38)
 	tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.22)
 	tabBar.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
@@ -368,7 +368,7 @@ function GUILib:_Build()
 	tabBarLine.Parent = tabBar
 
 	local tabList = Instance.new("UIListLayout")
-	tabList.Padding = UDim.new(0, 1)
+	tabList.Padding = UDim.new(0, 3)
 	tabList.SortOrder = Enum.SortOrder.LayoutOrder
 	tabList.Parent = tabBar
 
