@@ -628,7 +628,7 @@ end
 local Tab = {}
 Tab.__index = Tab
 
--- Hàm tự động cân bằng tab (CẬP NHẬT)
+-- Hàm tự động cân bằng tab
 function GUILib:_AutoBalanceTabs()
 	local tabBar = self.TabBar
 	if not tabBar then return end
@@ -648,29 +648,26 @@ function GUILib:_AutoBalanceTabs()
 	
 	-- Tính tổng chiều cao cần thiết
 	local totalHeight = 0
-	local spacing = 2  -- Giảm spacing
+	local spacing = 4
 	
 	for _, btn in ipairs(tabButtons) do
 		totalHeight = totalHeight + btn.Size.Y.Offset + spacing
 	end
 	
-	-- Thêm padding (ít hơn để nâng lên cao)
-	local padding = 100  -- Giảm từ 16 xuống 10
+	-- Thêm padding
+	local padding = 16
 	totalHeight = totalHeight + padding
 	
 	-- Cập nhật CanvasSize
 	tabBar.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
 	
-	-- Đảm bảo hiển thị đúng tab đầu tiên (cuộn lên đầu)
+	-- Đảm bảo hiển thị đúng tab đầu tiên
 	if self.ActiveTab and self.ActiveTab.Button then
 		local btnPos = self.ActiveTab.Button.AbsolutePosition.Y
 		local barPos = tabBar.AbsolutePosition.Y
-		local offset = btnPos - barPos - 5
-		if offset > 5 then  -- Chỉ cuộn nếu tab bị khuất
+		local offset = btnPos - barPos - 10
+		if offset > 0 then
 			tabBar.CanvasPosition = Vector2.new(0, offset)
-		else
-			-- Cuộn lên đầu để hiển thị tab đầu tiên
-			tabBar.CanvasPosition = Vector2.new(0, 0)
 		end
 	end
 end
