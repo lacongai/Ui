@@ -1,45 +1,35 @@
 --[[
-    FloatingGUI.lua  —  Bản nâng cấp (v2): đẹp hơn, "kính mờ" (glass/blur nhẹ),
-    đầy đủ và dễ dùng hơn bản gốc.
+    HubUI.lua  —  Viết lại từ đầu (v3)
+    ------------------------------------------------------------------
+    Bản này giữ nguyên API/cách dùng như các bản trước:
 
-    GIỮ NGUYÊN 100% API CỦA BẢN GỐC — mọi script đang dùng thư viện này
-    KHÔNG cần sửa gì cả:
-
-        local window = GUILib.new({
-            Title      = "My Hub",
-            Width      = 350,   -- mặc định 350
-            Height     = 300,   -- mặc định 300
-            ThemeColor = Color3.fromRGB(30, 30, 40),
-        })
-
+        local window = GUILib.new({Title=..., Width=350, Height=300, ThemeColor=...})
         local tab1 = window:AddTab("Chính")
-        tab1:AddButton("Nói xin chào", function() print("Xin chào!") end)
-        tab1:AddToggle("Bật ESP", false, function(state) print(state) end)
-        tab1:AddSlider("Tốc độ", 16, 100, 16, function(value) print(value) end)
-        tab1:AddDropdown("Chọn map", {"Map1","Map2","Map3"}, function(v) end)
-        tab1:AddTextbox("Nhập tên", "Placeholder...", function(Name) end)
-        tab1:AddLabel("Một dòng chữ")
-        tab1:AddSection("Nhóm chức năng")
+        tab1:AddButton(text, callback)
+        tab1:AddToggle(text, default, callback)
+        tab1:AddSlider(text, min, max, default, callback)
+        tab1:AddDropdown(text, options, callback)
+        tab1:AddTextbox(text, placeholder, callback)
+        tab1:AddLabel(text)
+        tab1:AddSection(text)
+        window:SetThemeColor(color) / SetAccentColor(color) / SetSize(w,h)
+        window:SetTitle(text) / SetTransparency(v) / SetToggleKey(key)
+        window:Toggle(bool) / Notify(title,text,duration) / Destroy()
 
-        window:SetThemeColor(Color3.fromRGB(255, 0, 0))
-        window:SetSize(450, 400)
-        window:SetTitle("Tên mới")
-        window:Toggle(false)
-        window:Destroy()
+    SỬA LỖI "phải kéo lên mới thấy tab đầu":
+    Nguyên nhân là ScrollingFrame của thanh Tab không được ép về vị trí
+    cuộn (0,0) ngay từ đầu — một số trường hợp Roblox tự đặt
+    CanvasPosition lệch xuống dưới khi CanvasSize thay đổi trong lúc
+    đang tạo các nút tab. Bản này CHỐT CanvasPosition = (0,0) mỗi khi
+    canvas cập nhật, và ScrollingEnabled chỉ để cuộn KHI nội dung thật
+    sự tràn (tự tính bằng AbsoluteWindowSize), nên tab đầu tiên luôn
+    nằm ở trên cùng, nhìn thấy ngay không cần kéo.
 
-    ĐIỂM MỚI SO VỚI BẢN TRƯỚC (không phá vỡ gì đã có):
-    - Hiệu ứng "kính mờ" nhẹ: các khối (title bar, tab bar, thẻ nút,
-      toggle, slider, dropdown, Namebox...) có độ trong suốt nhẹ +
-      viền sáng mảnh (UIStroke trong suốt) để trông như kính mờ hiện đại.
-    - Đổ bóng mềm phía sau cửa sổ, bo góc lớn hơn, cảm giác cao cấp hơn.
-    - Hiệu ứng mở cửa sổ mượt (fade + scale) khi tạo GUI.
-    - Tab có gạch chân chuyển động mượt khi chọn, hover sáng nhẹ.
-    - Nút bấm có hiệu ứng gợn sáng (ripple) khi bấm.
-    - Toggle bo tròn kiểu iOS, slider có viền phát sáng quanh nút kéo.
-    - Thêm các API MỚI (tùy chọn, không bắt buộc dùng, không phá API cũ):
-        window:SetTransparency(value)   -- chỉnh độ trong suốt kính (0-1)
-        window:SetToggleKey(keyCode)    -- đổi phím tắt ẩn/hiện (mặc định RightShift)
-        window:Notify(title, Name, Duration) -- thông báo nổi góc màn hình
+    CÁC THAY ĐỔI GIỮ NGUYÊN TỪ BẢN TRƯỚC:
+    - Bỏ AutomaticCanvasSize, tự tính CanvasSize qua UIListLayout
+    - ZIndex tường minh: TabBar=2, nút tab=3, ContentArea=1, trang=1..4
+    - LayoutOrder tường minh theo thứ tự thêm tab
+    - Không ẩn phần tử nào lúc khởi tạo (không phụ thuộc tween để hiện)
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -66,8 +56,6 @@ local function corner(obj, radius)
 	return c
 end
 
--- stroke() giữ nguyên chữ ký gốc (obj, color, thickness) và có thêm
--- tham số transparency tùy chọn ở cuối để tạo viền "kính" mờ nhẹ
 local function stroke(obj, color, thickness, transparency)
 	local s = Instance.new("UIStroke")
 	s.Color = color or Color3.fromRGB(60, 60, 75)
@@ -78,7 +66,6 @@ local function stroke(obj, color, thickness, transparency)
 	return s
 end
 
--- Thêm lớp gradient sáng nhẹ phía trên xuống dưới để tạo cảm giác kính
 local function glassSheen(obj, brightness)
 	local grad = Instance.new("UIGradient")
 	grad.Color = ColorSequence.new({
@@ -93,6 +80,19 @@ local function glassSheen(obj, brightness)
 	grad.Rotation = 90
 	grad.Parent = obj
 	return grad
+end
+
+-- Tự tính CanvasSize cho ScrollingFrame dựa trên UIListLayout, và LUÔN
+-- chốt CanvasPosition về (0,0) để tab/nội dung đầu tiên luôn nằm trên
+-- cùng — không cần kéo lên mới thấy.
+local function autoCanvas(scrollFrame, listLayout, extraPad)
+	extraPad = extraPad or 12
+	local function update()
+		scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + extraPad)
+		scrollFrame.CanvasPosition = Vector2.new(0, 0)
+	end
+	listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(update)
+	update()
 end
 
 local function makeDraggable(dragHandle, target)
@@ -135,7 +135,6 @@ function GUILib.new(config)
 
 	local self = setmetatable({}, GUILib)
 
-	-- Cấu hình có thể thay đổi bằng script (giữ nguyên tên field gốc)
 	self.Title = config.Title or "Floating GUI"
 	self.Width = config.Width or 350
 	self.Height = config.Height or 300
@@ -143,9 +142,7 @@ function GUILib.new(config)
 	self.AccentColor = config.AccentColor or Color3.fromRGB(105, 130, 255)
 	self.TextColor = config.TextColor or Color3.fromRGB(235, 235, 240)
 	self.Resizable = (config.Resizable == nil) and true or config.Resizable
-
-	-- Tùy chọn mới (có giá trị mặc định hợp lý, không bắt buộc set)
-	self.GlassTransparency = config.Transparency or 0.16   -- độ trong suốt "kính" nhẹ
+	self.GlassTransparency = config.Transparency or 0.16
 	self.ToggleKey = config.ToggleKey or Enum.KeyCode.RightShift
 
 	self.Tabs = {}
@@ -162,43 +159,44 @@ end
 function GUILib:_Build()
 	local T = self.GlassTransparency
 
-	-- ScreenGui gốc
 	local screenGui = Instance.new("ScreenGui")
-	screenGui.Name = "FloatingGUI"
+	screenGui.Name = "HubUI"
 	screenGui.ResetOnSpawn = false
 	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	screenGui.DisplayOrder = 100
 	screenGui.Parent = PlayerGui
 	self.ScreenGui = screenGui
 
-	-- Bóng đổ mềm phía sau cửa sổ (tạo chiều sâu, cảm giác nổi lên)
 	local shadow = Instance.new("ImageLabel")
 	shadow.Name = "Shadow"
+	shadow.ZIndex = 0
 	shadow.BackgroundTransparency = 1
 	shadow.Image = "rbxassetid://6014261993"
 	shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
 	shadow.ImageTransparency = 0.35
 	shadow.ScaleType = Enum.ScaleType.Slice
 	shadow.SliceCenter = Rect.new(99, 99, 99, 99)
-	shadow.ZIndex = 0
-	-- shadow.Parent = screenGui
+	shadow.Parent = screenGui
 	self.Shadow = shadow
 
-	-- Quầng sáng viền theo màu nhấn (glow nhẹ quanh cửa sổ)
 	local glow = Instance.new("ImageLabel")
 	glow.Name = "Glow"
+	glow.ZIndex = 0
 	glow.BackgroundTransparency = 1
 	glow.Image = "rbxassetid://6014261993"
 	glow.ImageColor3 = self.AccentColor
 	glow.ImageTransparency = 0.82
 	glow.ScaleType = Enum.ScaleType.Slice
 	glow.SliceCenter = Rect.new(99, 99, 99, 99)
-	glow.ZIndex = 0
-	-- glow.Parent = screenGui
+	glow.Parent = screenGui
 	self.GlowImage = glow
 
-	-- Khung chính (Main Frame) - có độ trong suốt nhẹ kiểu kính mờ
+	------------------------------------------------------------------
+	-- KHUNG CHÍNH
+	------------------------------------------------------------------
 	local main = Instance.new("Frame")
 	main.Name = "MainFrame"
+	main.ZIndex = 1
 	main.Size = UDim2.new(0, self.Width, 0, self.Height)
 	main.Position = UDim2.new(0.5, -self.Width / 2, 0.5, -self.Height / 2)
 	main.BackgroundColor3 = self.ThemeColor
@@ -210,7 +208,6 @@ function GUILib:_Build()
 	stroke(main, Color3.fromRGB(255, 255, 255), 1, 0.85)
 	self.MainFrame = main
 
-	-- Đồng bộ vị trí/kích thước bóng + glow theo MainFrame mỗi khi đổi
 	local function SyncOverlay()
 		shadow.Position = main.Position - UDim2.new(0, 18, 0, 12)
 		shadow.Size = main.Size + UDim2.new(0, 46, 0, 46)
@@ -220,11 +217,13 @@ function GUILib:_Build()
 	SyncOverlay()
 	main:GetPropertyChangedSignal("Position"):Connect(SyncOverlay)
 	main:GetPropertyChangedSignal("Size"):Connect(SyncOverlay)
-	self._SyncOverlay = SyncOverlay
 
-	-- Thanh tiêu đề (Title Bar) - dùng để kéo thả, có lớp kính sáng nhẹ
+	------------------------------------------------------------------
+	-- HEADER
+	------------------------------------------------------------------
 	local titleBar = Instance.new("Frame")
 	titleBar.Name = "TitleBar"
+	titleBar.ZIndex = 4
 	titleBar.Size = UDim2.new(1, 0, 0, 38)
 	titleBar.BackgroundColor3 = self.ThemeColor
 	titleBar.BackgroundTransparency = math.clamp(T + 0.1, 0, 0.95)
@@ -234,30 +233,27 @@ function GUILib:_Build()
 	glassSheen(titleBar, 0.05)
 	self.TitleBar = titleBar
 
-	-- Che góc bo tròn phía dưới titlebar cho liền mạch
 	local titleFix = Instance.new("Frame")
 	titleFix.Name = "TitleFix"
+	titleFix.ZIndex = 4
 	titleFix.Size = UDim2.new(1, 0, 0, 14)
 	titleFix.Position = UDim2.new(0, 0, 1, -14)
 	titleFix.BackgroundColor3 = self.ThemeColor
 	titleFix.BackgroundTransparency = titleBar.BackgroundTransparency
 	titleFix.BorderSizePixel = 0
-	titleFix.ZIndex = titleBar.ZIndex
 	titleFix.Parent = titleBar
 
-	-- Đường kẻ phân cách mảnh dưới title bar
 	local titleLine = Instance.new("Frame")
-	titleLine.Name = "TitleLine"
+	titleLine.ZIndex = 5
 	titleLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	titleLine.BackgroundTransparency = 0.9
 	titleLine.BorderSizePixel = 0
 	titleLine.Position = UDim2.new(0, 0, 1, -1)
 	titleLine.Size = UDim2.new(1, 0, 0, 1)
-	titleLine.ZIndex = 2
 	titleLine.Parent = titleBar
 
-	-- Chấm màu nhấn nhỏ trước tiêu đề
 	local dot = Instance.new("Frame")
+	dot.ZIndex = 5
 	dot.BackgroundColor3 = self.AccentColor
 	dot.Position = UDim2.new(0, 12, 0.5, -3)
 	dot.Size = UDim2.new(0, 6, 0, 6)
@@ -266,7 +262,7 @@ function GUILib:_Build()
 	self.TitleDot = dot
 
 	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Name = "TitleLabel"
+	titleLabel.ZIndex = 5
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Position = UDim2.new(0, 26, 0, 0)
 	titleLabel.Size = UDim2.new(1, -100, 1, 0)
@@ -279,9 +275,8 @@ function GUILib:_Build()
 	titleLabel.Parent = titleBar
 	self.TitleLabel = titleLabel
 
-	-- Nút đóng
 	local closeBtn = Instance.new("TextButton")
-	closeBtn.Name = "CloseButton"
+	closeBtn.ZIndex = 6
 	closeBtn.AutoButtonColor = false
 	closeBtn.Size = UDim2.new(0, 24, 0, 24)
 	closeBtn.Position = UDim2.new(1, -30, 0, 7)
@@ -304,9 +299,8 @@ function GUILib:_Build()
 		self:Toggle(false)
 	end)
 
-	-- Nút thu nhỏ (minimize)
 	local minBtn = Instance.new("TextButton")
-	minBtn.Name = "MinimizeButton"
+	minBtn.ZIndex = 6
 	minBtn.AutoButtonColor = false
 	minBtn.Size = UDim2.new(0, 24, 0, 24)
 	minBtn.Position = UDim2.new(1, -58, 0, 7)
@@ -339,12 +333,12 @@ function GUILib:_Build()
 
 	makeDraggable(titleBar, main)
 
-	-- Thanh Tab (bên trái) - panel kính mờ, tối hơn nền chính một chút.
-	-- Dùng ScrollingFrame (không phải Frame thường) để KHÔNG BAO GIỜ bị
-	-- giới hạn số lượng tab: dù thêm 2, 5, hay 20 tab, danh sách sẽ tự
-	-- cuộn thay vì bị cắt mất bởi MainFrame.ClipsDescendants.
+	------------------------------------------------------------------
+	-- SIDEBAR (THANH TAB) — ZIndex = 2, luôn nổi trên ContentArea (ZIndex 1)
+	------------------------------------------------------------------
 	local tabBar = Instance.new("ScrollingFrame")
 	tabBar.Name = "TabBar"
+	tabBar.ZIndex = 2
 	tabBar.Size = UDim2.new(0, 104, 1, -38)
 	tabBar.Position = UDim2.new(0, 0, 0, 38)
 	tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.22)
@@ -354,23 +348,24 @@ function GUILib:_Build()
 	tabBar.ScrollBarImageColor3 = self.AccentColor
 	tabBar.ScrollingDirection = Enum.ScrollingDirection.Y
 	tabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
-	tabBar.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	tabBar.CanvasPosition = Vector2.new(0, 0)
 	tabBar.Parent = main
 	self.TabBar = tabBar
 
 	local tabBarLine = Instance.new("Frame")
+	tabBarLine.ZIndex = 3
 	tabBarLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	tabBarLine.BackgroundTransparency = 0.92
 	tabBarLine.BorderSizePixel = 0
 	tabBarLine.Position = UDim2.new(1, -1, 0, 0)
 	tabBarLine.Size = UDim2.new(0, 1, 1, 0)
-	tabBarLine.ZIndex = 3
 	tabBarLine.Parent = tabBar
 
 	local tabList = Instance.new("UIListLayout")
 	tabList.Padding = UDim.new(0, 4)
 	tabList.SortOrder = Enum.SortOrder.LayoutOrder
 	tabList.Parent = tabBar
+	self._TabListLayout = tabList
 
 	local tabPadding = Instance.new("UIPadding")
 	tabPadding.PaddingTop = UDim.new(0, 8)
@@ -379,9 +374,14 @@ function GUILib:_Build()
 	tabPadding.PaddingBottom = UDim.new(0, 8)
 	tabPadding.Parent = tabBar
 
-	-- Vùng nội dung (bên phải)
+	autoCanvas(tabBar, tabList, 16)
+
+	------------------------------------------------------------------
+	-- VÙNG NỘI DUNG — ZIndex = 1
+	------------------------------------------------------------------
 	local content = Instance.new("Frame")
 	content.Name = "ContentArea"
+	content.ZIndex = 1
 	content.Size = UDim2.new(1, -104, 1, -38)
 	content.Position = UDim2.new(0, 104, 0, 38)
 	content.BackgroundColor3 = self.ThemeColor
@@ -390,10 +390,12 @@ function GUILib:_Build()
 	content.Parent = main
 	self.ContentArea = content
 
-	-- Tay cầm resize (góc dưới phải) - có biểu tượng chấm nhỏ dễ nhìn
+	------------------------------------------------------------------
+	-- TAY CẦM RESIZE
+	------------------------------------------------------------------
 	if self.Resizable then
 		local resizeHandle = Instance.new("Frame")
-		resizeHandle.Name = "ResizeHandle"
+		resizeHandle.ZIndex = 6
 		resizeHandle.Size = UDim2.new(0, 18, 0, 18)
 		resizeHandle.Position = UDim2.new(1, -18, 1, -18)
 		resizeHandle.BackgroundTransparency = 1
@@ -402,6 +404,7 @@ function GUILib:_Build()
 		for i = 0, 2 do
 			for j = 0, (2 - i) do
 				local grip = Instance.new("Frame")
+				grip.ZIndex = 6
 				grip.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 				grip.BackgroundTransparency = 0.55
 				grip.BorderSizePixel = 0
@@ -439,7 +442,6 @@ function GUILib:_Build()
 		end)
 	end
 
-	-- Cho phép mở lại bằng phím tắt (mặc định RightShift) khi đóng
 	self._open = true
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.KeyCode == self.ToggleKey then
@@ -447,26 +449,19 @@ function GUILib:_Build()
 		end
 	end)
 
-	-- Hiệu ứng mở cửa sổ mượt (fade + scale nhẹ lúc khởi tạo)
-	main.BackgroundTransparency = 1
+	------------------------------------------------------------------
+	-- HIỆU ỨNG MỞ CỬA SỔ — chỉ phóng to nhẹ, KHÔNG ẩn phần tử nào
+	------------------------------------------------------------------
+	local finalSize = main.Size
 	main.Size = UDim2.new(0, self.Width * 0.94, 0, self.Height * 0.94)
-	shadow.ImageTransparency = 1
-	glow.ImageTransparency = 1
-	tween(main, {
-		Size = UDim2.new(0, self.Width, 0, self.Height),
-		BackgroundTransparency = T,
-	}, 0.22, Enum.EasingStyle.Back)
-	tween(shadow, {ImageTransparency = 0.35}, 0.3)
-	tween(glow, {ImageTransparency = 0.82}, 0.3)
+	tween(main, {Size = finalSize}, 0.22, Enum.EasingStyle.Back)
 end
 
 --======================================================
--- API: ĐỔI MÀU / KÍCH THƯỚC BẰNG SCRIPT (giữ nguyên gốc)
+-- API: ĐỔI MÀU / KÍCH THƯỚC BẰNG SCRIPT
 --======================================================
 function GUILib:SetThemeColor(color)
 	self.ThemeColor = color
-	local T = self.GlassTransparency
-
 	tween(self.MainFrame, {BackgroundColor3 = color}, 0.2)
 	tween(self.TitleBar, {BackgroundColor3 = color}, 0.2)
 	tween(self.ContentArea, {BackgroundColor3 = color}, 0.2)
@@ -486,7 +481,6 @@ function GUILib:SetAccentColor(color)
 	if self.TitleDot then
 		tween(self.TitleDot, {BackgroundColor3 = color}, 0.2)
 	end
-	-- Cập nhật tab đang chọn (đường gạch chân) và các thành phần dùng AccentColor
 	if self.ActiveTab and self.ActiveTab.Button then
 		local indicator = self.ActiveTab.Button:FindFirstChild("Indicator")
 		if indicator then
@@ -505,24 +499,17 @@ function GUILib:SetSize(width, height)
 	end
 end
 
-function GUILib:SetTitle(Name)
-	self.Title = Name
-	self.TitleLabel.Text = Name
+function GUILib:SetTitle(text)
+	self.Title = text
+	self.TitleLabel.Text = text
 end
 
 function GUILib:Toggle(visible)
 	self._open = visible
 	if visible then
 		self.ScreenGui.Enabled = true
-		self.MainFrame.BackgroundTransparency = 1
-		tween(self.MainFrame, {BackgroundTransparency = self.GlassTransparency}, 0.15)
 	else
-		tween(self.MainFrame, {BackgroundTransparency = 1}, 0.12)
-		task.delay(0.12, function()
-			if not self._open then
-				self.ScreenGui.Enabled = false
-			end
-		end)
+		self.ScreenGui.Enabled = false
 	end
 end
 
@@ -530,37 +517,29 @@ function GUILib:Destroy()
 	self.ScreenGui:Destroy()
 end
 
---======================================================
--- API MỚI (tùy chọn) - không ảnh hưởng tới script cũ
---======================================================
-
--- Chỉnh độ trong suốt "kính" của toàn bộ cửa sổ (0 = đục hoàn toàn, 1 = vô hình)
 function GUILib:SetTransparency(value)
 	value = math.clamp(value, 0, 0.6)
 	self.GlassTransparency = value
-	local T = value
-
-	tween(self.MainFrame, {BackgroundTransparency = T}, 0.2)
-	tween(self.TitleBar, {BackgroundTransparency = math.clamp(T + 0.1, 0, 0.95)}, 0.2)
-	tween(self.ContentArea, {BackgroundTransparency = T}, 0.2)
-	tween(self.TabBar, {BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)}, 0.2)
+	tween(self.MainFrame, {BackgroundTransparency = value}, 0.2)
+	tween(self.TitleBar, {BackgroundTransparency = math.clamp(value + 0.1, 0, 0.95)}, 0.2)
+	tween(self.ContentArea, {BackgroundTransparency = value}, 0.2)
+	tween(self.TabBar, {BackgroundTransparency = math.clamp(value + 0.05, 0, 0.95)}, 0.2)
 
 	local titleFix = self.TitleBar:FindFirstChild("TitleFix")
 	if titleFix then
-		tween(titleFix, {BackgroundTransparency = math.clamp(T + 0.1, 0, 0.95)}, 0.2)
+		tween(titleFix, {BackgroundTransparency = math.clamp(value + 0.1, 0, 0.95)}, 0.2)
 	end
 end
 
--- Đổi phím tắt ẩn/hiện cửa sổ (mặc định Enum.KeyCode.RightShift)
 function GUILib:SetToggleKey(keyCode)
 	self.ToggleKey = keyCode
 end
 
--- Hiện một thông báo nổi ở góc dưới bên phải màn hình
-function GUILib:Notify(Title, Name, Duration)
-	Duration = Duration or 3
+function GUILib:Notify(title, text, duration)
+	duration = duration or 3
 
 	local notif = Instance.new("Frame")
+	notif.ZIndex = 50
 	notif.AnchorPoint = Vector2.new(1, 1)
 	notif.Position = UDim2.new(1, -20, 1, -20)
 	notif.Size = UDim2.new(0, 260, 0, 0)
@@ -573,6 +552,7 @@ function GUILib:Notify(Title, Name, Duration)
 	stroke(notif, Color3.fromRGB(255, 255, 255), 1, 0.85)
 
 	local bar = Instance.new("Frame")
+	bar.ZIndex = 51
 	bar.BackgroundColor3 = self.AccentColor
 	bar.BorderSizePixel = 0
 	bar.Size = UDim2.new(0, 3, 1, 0)
@@ -580,22 +560,24 @@ function GUILib:Notify(Title, Name, Duration)
 	corner(bar, 2)
 
 	local titleL = Instance.new("TextLabel")
+	titleL.ZIndex = 51
 	titleL.BackgroundTransparency = 1
 	titleL.Position = UDim2.new(0, 14, 0, 8)
 	titleL.Size = UDim2.new(1, -24, 0, 18)
 	titleL.Font = Enum.Font.GothamBold
-	titleL.Text = Title or "Thông báo"
+	titleL.Text = title or "Thông báo"
 	titleL.TextColor3 = self.TextColor
 	titleL.TextSize = 13
 	titleL.TextXAlignment = Enum.TextXAlignment.Left
 	titleL.Parent = notif
 
 	local bodyL = Instance.new("TextLabel")
+	bodyL.ZIndex = 51
 	bodyL.BackgroundTransparency = 1
 	bodyL.Position = UDim2.new(0, 14, 0, 28)
 	bodyL.Size = UDim2.new(1, -24, 0, 0)
 	bodyL.Font = Enum.Font.Gotham
-	bodyL.Text = Name or ""
+	bodyL.Text = text or ""
 	bodyL.TextColor3 = Color3.fromRGB(210, 210, 216)
 	bodyL.TextSize = 12
 	bodyL.TextWrapped = true
@@ -607,7 +589,7 @@ function GUILib:Notify(Title, Name, Duration)
 	local targetHeight = 28 + bodyL.AbsoluteSize.Y + 12
 	tween(notif, {Size = UDim2.new(0, 260, 0, targetHeight)}, 0.2, Enum.EasingStyle.Back)
 
-	task.delay(Duration, function()
+	task.delay(duration, function()
 		local t = tween(notif, {BackgroundTransparency = 1, Size = UDim2.new(0, 260, 0, 0)}, 0.2)
 		t.Completed:Wait()
 		notif:Destroy()
@@ -621,27 +603,31 @@ local Tab = {}
 Tab.__index = Tab
 
 function GUILib:AddTab(name)
+	local order = #self.Tabs + 1
+
 	local tabButton = Instance.new("TextButton")
 	tabButton.Name = name .. "TabButton"
+	tabButton.ZIndex = 3
+	tabButton.LayoutOrder = order
 	tabButton.AutoButtonColor = false
 	tabButton.Size = UDim2.new(1, 0, 0, 30)
 	tabButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	tabButton.BackgroundTransparency = 1
+	tabButton.BackgroundTransparency = (order == 1) and 0.88 or 1
 	tabButton.Text = "  " .. name
 	tabButton.Font = Enum.Font.Gotham
 	tabButton.TextSize = 13
-	tabButton.TextColor3 = Color3.fromRGB(170, 170, 178)
+	tabButton.TextColor3 = (order == 1) and self.TextColor or Color3.fromRGB(170, 170, 178)
 	tabButton.TextXAlignment = Enum.TextXAlignment.Left
 	tabButton.TextTruncate = Enum.TextTruncate.AtEnd
 	tabButton.Parent = self.TabBar
 	corner(tabButton, 8)
 
-	-- Gạch chân/chỉ báo bên trái khi tab đang được chọn
 	local indicator = Instance.new("Frame")
 	indicator.Name = "Indicator"
+	indicator.ZIndex = 4
 	indicator.AnchorPoint = Vector2.new(0, 0.5)
 	indicator.Position = UDim2.new(0, 0, 0.5, 0)
-	indicator.Size = UDim2.new(0, 3, 0, 0)
+	indicator.Size = UDim2.new(0, 3, 0, (order == 1) and 18 or 0)
 	indicator.BackgroundColor3 = self.AccentColor
 	indicator.BorderSizePixel = 0
 	indicator.Parent = tabButton
@@ -649,14 +635,15 @@ function GUILib:AddTab(name)
 
 	local page = Instance.new("ScrollingFrame")
 	page.Name = name .. "Page"
+	page.ZIndex = 1
 	page.Size = UDim2.new(1, 0, 1, 0)
 	page.BackgroundTransparency = 1
 	page.BorderSizePixel = 0
 	page.ScrollBarThickness = 3
 	page.ScrollBarImageColor3 = self.AccentColor
 	page.CanvasSize = UDim2.new(0, 0, 0, 0)
-	page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	page.Visible = false
+	page.CanvasPosition = Vector2.new(0, 0)
+	page.Visible = (order == 1)
 	page.Parent = self.ContentArea
 
 	local layout = Instance.new("UIListLayout")
@@ -671,6 +658,8 @@ function GUILib:AddTab(name)
 	padding.PaddingBottom = UDim.new(0, 10)
 	padding.Parent = page
 
+	autoCanvas(page, layout, 20)
+
 	local tabObj = setmetatable({
 		Name = name,
 		Button = tabButton,
@@ -679,6 +668,10 @@ function GUILib:AddTab(name)
 	}, Tab)
 
 	table.insert(self.Tabs, tabObj)
+
+	if order == 1 then
+		self.ActiveTab = tabObj
+	end
 
 	tabButton.MouseEnter:Connect(function()
 		if self.ActiveTab ~= tabObj then
@@ -690,50 +683,39 @@ function GUILib:AddTab(name)
 			tween(tabButton, {BackgroundTransparency = 1}, 0.12)
 		end
 	end)
-
 	tabButton.MouseButton1Click:Connect(function()
 		self:_SelectTab(tabObj)
 	end)
-
-	-- Chọn tab đầu tiên làm mặc định
-	if #self.Tabs == 1 then
-		self:_SelectTab(tabObj)
-	end
 
 	return tabObj
 end
 
 function GUILib:_SelectTab(tabObj)
 	for _, t in ipairs(self.Tabs) do
-		t.Page.Visible = false
-		tween(t.Button, {BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(170, 170, 178)}, 0.15)
+		t.Page.Visible = (t == tabObj)
+		tween(t.Button, {
+			BackgroundTransparency = (t == tabObj) and 0.88 or 1,
+			TextColor3 = (t == tabObj) and self.TextColor or Color3.fromRGB(170, 170, 178),
+		}, 0.15)
 		local ind = t.Button:FindFirstChild("Indicator")
 		if ind then
-			tween(ind, {Size = UDim2.new(0, 3, 0, 0)}, 0.15)
+			tween(ind, {Size = UDim2.new(0, 3, 0, (t == tabObj) and 18 or 0)}, 0.18, Enum.EasingStyle.Back)
 		end
 	end
-
-	tabObj.Page.Visible = true
-	tween(tabObj.Button, {BackgroundTransparency = 0.88, TextColor3 = self.TextColor}, 0.15)
-	local ind = tabObj.Button:FindFirstChild("Indicator")
-	if ind then
-		tween(ind, {Size = UDim2.new(0, 3, 0, 18)}, 0.18, Enum.EasingStyle.Back)
-	end
-
 	self.ActiveTab = tabObj
 end
 
 --======================================================
--- CÁC THÀNH PHẦN (COMPONENTS) TRONG TAB — giữ nguyên chữ ký gốc
+-- CÁC THÀNH PHẦN TRONG TAB
 --======================================================
 
--- Nút bấm
-function Tab:AddButton(Name, Callback)
+function Tab:AddButton(text, callback)
 	local btn = Instance.new("TextButton")
+	btn.ZIndex = 2
 	btn.Size = UDim2.new(1, 0, 0, 36)
 	btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	btn.BackgroundTransparency = 0.92
-	btn.Text = Name
+	btn.Text = text
 	btn.Font = Enum.Font.GothamSemibold
 	btn.TextSize = 14
 	btn.TextColor3 = self.Library.TextColor
@@ -750,15 +732,14 @@ function Tab:AddButton(Name, Callback)
 		tween(btn, {BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92}, 0.15)
 	end)
 	btn.MouseButton1Click:Connect(function()
-		-- Hiệu ứng gợn sáng (ripple) lan ra từ tâm nút khi bấm
 		local ripple = Instance.new("Frame")
+		ripple.ZIndex = 3
 		ripple.AnchorPoint = Vector2.new(0.5, 0.5)
 		ripple.Position = UDim2.new(0.5, 0, 0.5, 0)
 		ripple.Size = UDim2.new(0, 0, 0, 0)
 		ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 		ripple.BackgroundTransparency = 0.6
 		ripple.BorderSizePixel = 0
-		ripple.ZIndex = 5
 		ripple.Parent = btn
 		corner(ripple, 999)
 
@@ -768,15 +749,15 @@ function Tab:AddButton(Name, Callback)
 			ripple:Destroy()
 		end)
 
-		if Callback then Callback() end
+		if callback then callback() end
 	end)
 
 	return btn
 end
 
--- Công tắc bật/tắt
-function Tab:AddToggle(Name, Default, Callback)
+function Tab:AddToggle(text, default, callback)
 	local holder = Instance.new("Frame")
+	holder.ZIndex = 2
 	holder.Size = UDim2.new(1, 0, 0, 34)
 	holder.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	holder.BackgroundTransparency = 0.94
@@ -785,10 +766,11 @@ function Tab:AddToggle(Name, Default, Callback)
 	stroke(holder, Color3.fromRGB(255, 255, 255), 1, 0.9)
 
 	local label = Instance.new("TextLabel")
+	label.ZIndex = 2
 	label.BackgroundTransparency = 1
 	label.Position = UDim2.new(0, 12, 0, 0)
 	label.Size = UDim2.new(1, -62, 1, 0)
-	label.Text = Name
+	label.Text = text
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
 	label.TextColor3 = self.Library.TextColor
@@ -796,23 +778,25 @@ function Tab:AddToggle(Name, Default, Callback)
 	label.Parent = holder
 
 	local switch = Instance.new("TextButton")
+	switch.ZIndex = 3
 	switch.Size = UDim2.new(0, 40, 0, 20)
 	switch.Position = UDim2.new(1, -50, 0.5, -10)
-	switch.BackgroundColor3 = Default and self.Library.AccentColor or Color3.fromRGB(255, 255, 255)
-	switch.BackgroundTransparency = Default and 0.1 or 0.85
+	switch.BackgroundColor3 = default and self.Library.AccentColor or Color3.fromRGB(255, 255, 255)
+	switch.BackgroundTransparency = default and 0.1 or 0.85
 	switch.Text = ""
 	switch.AutoButtonColor = false
 	switch.Parent = holder
 	corner(switch, 10)
 
 	local knob = Instance.new("Frame")
+	knob.ZIndex = 4
 	knob.Size = UDim2.new(0, 16, 0, 16)
-	knob.Position = Default and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+	knob.Position = default and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
 	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	knob.Parent = switch
 	corner(knob, 8)
 
-	local state = Default or false
+	local state = default or false
 	local function updateVisual(s)
 		tween(switch, {
 			BackgroundColor3 = s and self.Library.AccentColor or Color3.fromRGB(255, 255, 255),
@@ -824,9 +808,8 @@ function Tab:AddToggle(Name, Default, Callback)
 	switch.MouseButton1Click:Connect(function()
 		state = not state
 		updateVisual(state)
-		if Callback then Callback(state) end
+		if callback then callback(state) end
 	end)
-	holder.InputBegan:Connect(function() end) -- giữ chỗ, không phá hành vi gốc
 
 	return {
 		Set = function(_, value)
@@ -837,9 +820,9 @@ function Tab:AddToggle(Name, Default, Callback)
 	}
 end
 
--- Thanh trượt (slider)
-function Tab:AddSlider(Name, Min, Max, Default, Callback)
+function Tab:AddSlider(text, min, max, default, callback)
 	local holder = Instance.new("Frame")
+	holder.ZIndex = 2
 	holder.Size = UDim2.new(1, 0, 0, 50)
 	holder.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	holder.BackgroundTransparency = 0.94
@@ -848,10 +831,11 @@ function Tab:AddSlider(Name, Min, Max, Default, Callback)
 	stroke(holder, Color3.fromRGB(255, 255, 255), 1, 0.9)
 
 	local label = Instance.new("TextLabel")
+	label.ZIndex = 2
 	label.BackgroundTransparency = 1
 	label.Position = UDim2.new(0, 12, 0, 8)
 	label.Size = UDim2.new(1, -60, 0, 18)
-	label.Text = Name
+	label.Text = text
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
 	label.TextColor3 = self.Library.TextColor
@@ -859,10 +843,11 @@ function Tab:AddSlider(Name, Min, Max, Default, Callback)
 	label.Parent = holder
 
 	local valueLabel = Instance.new("TextLabel")
+	valueLabel.ZIndex = 2
 	valueLabel.BackgroundTransparency = 1
 	valueLabel.Size = UDim2.new(0, 44, 0, 18)
 	valueLabel.Position = UDim2.new(1, -56, 0, 8)
-	valueLabel.Text = tostring(Default)
+	valueLabel.Text = tostring(default)
 	valueLabel.Font = Enum.Font.GothamBold
 	valueLabel.TextSize = 13
 	valueLabel.TextColor3 = self.Library.AccentColor
@@ -870,6 +855,7 @@ function Tab:AddSlider(Name, Min, Max, Default, Callback)
 	valueLabel.Parent = holder
 
 	local track = Instance.new("Frame")
+	track.ZIndex = 2
 	track.Size = UDim2.new(1, -24, 0, 6)
 	track.Position = UDim2.new(0, 12, 0, 32)
 	track.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -878,7 +864,8 @@ function Tab:AddSlider(Name, Min, Max, Default, Callback)
 	corner(track, 3)
 
 	local fill = Instance.new("Frame")
-	local pct = (Default - Min) / (Max - Min)
+	local pct = (default - min) / (max - min)
+	fill.ZIndex = 3
 	fill.Size = UDim2.new(pct, 0, 1, 0)
 	fill.BackgroundColor3 = self.Library.AccentColor
 	fill.BorderSizePixel = 0
@@ -886,11 +873,11 @@ function Tab:AddSlider(Name, Min, Max, Default, Callback)
 	corner(fill, 3)
 
 	local knob = Instance.new("Frame")
+	knob.ZIndex = 4
 	knob.AnchorPoint = Vector2.new(0.5, 0.5)
 	knob.Position = UDim2.new(pct, 0, 0.5, 0)
 	knob.Size = UDim2.new(0, 12, 0, 12)
 	knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	knob.ZIndex = 2
 	knob.Parent = track
 	corner(knob, 6)
 	stroke(knob, self.Library.AccentColor, 2, 0)
@@ -898,12 +885,12 @@ function Tab:AddSlider(Name, Min, Max, Default, Callback)
 	local dragging = false
 	local function updateFromInput(inputPos)
 		local relX = math.clamp((inputPos - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-		local value = math.floor(Min + (Max - Min) * relX + 0.5)
-		relX = (value - Min) / (Max - Min)
+		local value = math.floor(min + (max - min) * relX + 0.5)
+		relX = (value - min) / (max - min)
 		fill.Size = UDim2.new(relX, 0, 1, 0)
 		knob.Position = UDim2.new(relX, 0, 0.5, 0)
 		valueLabel.Text = tostring(value)
-		if Callback then Callback(value) end
+		if callback then callback(value) end
 		return value
 	end
 
@@ -927,9 +914,9 @@ function Tab:AddSlider(Name, Min, Max, Default, Callback)
 	return holder
 end
 
--- Dropdown chọn 1 trong nhiều lựa chọn
-function Tab:AddDropdown(Name, Options, Callback)
+function Tab:AddDropdown(text, options, callback)
 	local holder = Instance.new("Frame")
+	holder.ZIndex = 2
 	holder.Size = UDim2.new(1, 0, 0, 36)
 	holder.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	holder.BackgroundTransparency = 0.94
@@ -939,9 +926,10 @@ function Tab:AddDropdown(Name, Options, Callback)
 	stroke(holder, Color3.fromRGB(255, 255, 255), 1, 0.9)
 
 	local main = Instance.new("TextButton")
+	main.ZIndex = 3
 	main.Size = UDim2.new(1, 0, 0, 36)
 	main.BackgroundTransparency = 1
-	main.Text = "  " .. Name
+	main.Text = "  " .. text
 	main.Font = Enum.Font.Gotham
 	main.TextSize = 13
 	main.TextColor3 = self.Library.TextColor
@@ -949,6 +937,7 @@ function Tab:AddDropdown(Name, Options, Callback)
 	main.Parent = holder
 
 	local arrow = Instance.new("TextLabel")
+	arrow.ZIndex = 3
 	arrow.BackgroundTransparency = 1
 	arrow.Position = UDim2.new(1, -30, 0, 0)
 	arrow.Size = UDim2.new(0, 24, 0, 36)
@@ -959,7 +948,8 @@ function Tab:AddDropdown(Name, Options, Callback)
 	arrow.Parent = holder
 
 	local listHolder = Instance.new("Frame")
-	listHolder.Size = UDim2.new(1, 0, 0, #Options * 28)
+	listHolder.ZIndex = 2
+	listHolder.Size = UDim2.new(1, 0, 0, #options * 28)
 	listHolder.Position = UDim2.new(0, 0, 0, 36)
 	listHolder.BackgroundTransparency = 1
 	listHolder.Parent = holder
@@ -969,8 +959,10 @@ function Tab:AddDropdown(Name, Options, Callback)
 	layout.Parent = listHolder
 
 	local expanded = false
-	for _, option in ipairs(Options) do
+	for i, option in ipairs(options) do
 		local optBtn = Instance.new("TextButton")
+		optBtn.ZIndex = 2
+		optBtn.LayoutOrder = i
 		optBtn.AutoButtonColor = false
 		optBtn.Size = UDim2.new(1, 0, 0, 28)
 		optBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -994,14 +986,14 @@ function Tab:AddDropdown(Name, Options, Callback)
 			expanded = false
 			tween(holder, {Size = UDim2.new(1, 0, 0, 36)}, 0.15)
 			tween(arrow, {Rotation = 0}, 0.15)
-			if Callback then Callback(option) end
+			if callback then callback(option) end
 		end)
 	end
 
 	main.MouseButton1Click:Connect(function()
 		expanded = not expanded
 		if expanded then
-			tween(holder, {Size = UDim2.new(1, 0, 0, 36 + #Options * 28)}, 0.18)
+			tween(holder, {Size = UDim2.new(1, 0, 0, 36 + #options * 28)}, 0.18)
 			tween(arrow, {Rotation = 180}, 0.18)
 		else
 			tween(holder, {Size = UDim2.new(1, 0, 0, 36)}, 0.15)
@@ -1012,17 +1004,18 @@ function Tab:AddDropdown(Name, Options, Callback)
 	return holder
 end
 
--- Ô nhập chữ
-function Tab:AddTextbox(Name, Placeholder, Callback)
+function Tab:AddTextbox(text, placeholder, callback)
 	local holder = Instance.new("Frame")
+	holder.ZIndex = 2
 	holder.Size = UDim2.new(1, 0, 0, 52)
 	holder.BackgroundTransparency = 1
 	holder.Parent = self.Page
 
 	local label = Instance.new("TextLabel")
+	label.ZIndex = 2
 	label.BackgroundTransparency = 1
 	label.Size = UDim2.new(1, 0, 0, 16)
-	label.Text = Name
+	label.Text = text
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
 	label.TextColor3 = self.Library.TextColor
@@ -1030,11 +1023,12 @@ function Tab:AddTextbox(Name, Placeholder, Callback)
 	label.Parent = holder
 
 	local box = Instance.new("TextBox")
+	box.ZIndex = 2
 	box.Size = UDim2.new(1, 0, 0, 32)
 	box.Position = UDim2.new(0, 0, 0, 18)
 	box.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	box.BackgroundTransparency = 0.92
-	box.PlaceholderText = Placeholder or ""
+	box.PlaceholderText = placeholder or ""
 	box.PlaceholderColor3 = Color3.fromRGB(150, 150, 158)
 	box.Text = ""
 	box.Font = Enum.Font.Gotham
@@ -1050,18 +1044,18 @@ function Tab:AddTextbox(Name, Placeholder, Callback)
 	end)
 	box.FocusLost:Connect(function(enterPressed)
 		tween(boxStroke, {Color = Color3.fromRGB(255, 255, 255), Transparency = 0.88}, 0.15)
-		if Callback then Callback(box.Text, enterPressed) end
+		if callback then callback(box.Text, enterPressed) end
 	end)
 
 	return box
 end
 
--- Nhãn chữ đơn thuần
-function Tab:AddLabel(Name)
+function Tab:AddLabel(text)
 	local label = Instance.new("TextLabel")
+	label.ZIndex = 2
 	label.Size = UDim2.new(1, 0, 0, 20)
 	label.BackgroundTransparency = 1
-	label.Text = Name
+	label.Text = text
 	label.Font = Enum.Font.Gotham
 	label.TextSize = 13
 	label.TextColor3 = self.Library.TextColor
@@ -1071,17 +1065,18 @@ function Tab:AddLabel(Name)
 	return label
 end
 
--- Đường kẻ phân cách / tiêu đề nhóm
-function Tab:AddSection(Name)
+function Tab:AddSection(text)
 	local holder = Instance.new("Frame")
+	holder.ZIndex = 2
 	holder.Size = UDim2.new(1, 0, 0, 24)
 	holder.BackgroundTransparency = 1
 	holder.Parent = self.Page
 
 	local label = Instance.new("TextLabel")
+	label.ZIndex = 2
 	label.Size = UDim2.new(1, 0, 0, 16)
 	label.BackgroundTransparency = 1
-	label.Text = string.upper(Name)
+	label.Text = string.upper(text)
 	label.Font = Enum.Font.GothamBold
 	label.TextSize = 11
 	label.TextColor3 = self.Library.AccentColor
@@ -1089,6 +1084,7 @@ function Tab:AddSection(Name)
 	label.Parent = holder
 
 	local line = Instance.new("Frame")
+	line.ZIndex = 2
 	line.Size = UDim2.new(1, 0, 0, 1)
 	line.Position = UDim2.new(0, 0, 1, -2)
 	line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
