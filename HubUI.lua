@@ -157,10 +157,7 @@ function GUILib.new(config)
 end
 
 --======================================================
--- DỰNG GIAO DIỆN GỐC
---======================================================
---======================================================
--- DỰNG GIAO DIỆN GỐC (PHẦN SỬA TAB BAR - NÂNG CAO)
+-- DỰNG GIAO DIỆN GỐC (PHẦN SỬA TAB BAR - FIX HOÀN TOÀN)
 --======================================================
 function GUILib:_Build()
 	local T = self.GlassTransparency
@@ -338,35 +335,20 @@ function GUILib:_Build()
 	makeDraggable(titleBar, main)
 
 	-- ======================================================
-	-- TAB BAR - NÂNG CAO LÊN (GIẢM PADDING TRÊN)
+	-- TAB BAR - FIX: DÙNG FRAME THƯỜNG + CLIP + SCROLLBAR TÙY CHỈNH
 	-- ======================================================
 	
-	-- Thanh Tab bên trái
-	local tabBar = Instance.new("ScrollingFrame")
-	tabBar.Name = "TabBar"
-	tabBar.Size = UDim2.new(0, 104, 1, -38)
-	tabBar.Position = UDim2.new(0, 0, 0, 38)
-	tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.22)
-	tabBar.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
-	tabBar.BorderSizePixel = 0
-	tabBar.ScrollBarThickness = 3
-	tabBar.ScrollBarImageColor3 = self.AccentColor
-	tabBar.ScrollingDirection = Enum.ScrollingDirection.Y
-	
-	-- Tự động tính CanvasSize
-	tabBar.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	tabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
-	
-	-- GIẢM PADDING TRÊN ĐỂ NÂNG TAB LÊN CAO
-	local tabPadding = Instance.new("UIPadding")
-	tabPadding.PaddingTop = UDim.new(0, 2)   -- Giảm từ 8 xuống 2
-	tabPadding.PaddingBottom = UDim.new(0, 8)
-	tabPadding.PaddingLeft = UDim.new(0, 6)
-	tabPadding.PaddingRight = UDim.new(0, 6)
-	tabPadding.Parent = tabBar
-	
-	tabBar.Parent = main
-	self.TabBar = tabBar
+	-- Container cho tab bar (có clip để cuộn)
+	local tabContainer = Instance.new("Frame")
+	tabContainer.Name = "TabContainer"
+	tabContainer.Size = UDim2.new(0, 104, 1, -38)
+	tabContainer.Position = UDim2.new(0, 0, 0, 38)
+	tabContainer.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.22)
+	tabContainer.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
+	tabContainer.BorderSizePixel = 0
+	tabContainer.ClipsDescendants = true
+	tabContainer.Parent = main
+	self.TabContainer = tabContainer
 
 	-- Đường kẻ phân cách
 	local tabBarLine = Instance.new("Frame")
@@ -376,11 +358,34 @@ function GUILib:_Build()
 	tabBarLine.Position = UDim2.new(1, -1, 0, 0)
 	tabBarLine.Size = UDim2.new(0, 1, 1, 0)
 	tabBarLine.ZIndex = 3
-	tabBarLine.Parent = tabBar
+	tabBarLine.Parent = tabContainer
+
+	-- ScrollingFrame bên trong để cuộn
+	local tabBar = Instance.new("ScrollingFrame")
+	tabBar.Name = "TabBar"
+	tabBar.Size = UDim2.new(1, 0, 1, 0)
+	tabBar.Position = UDim2.new(0, 0, 0, 0)
+	tabBar.BackgroundTransparency = 1
+	tabBar.BorderSizePixel = 0
+	tabBar.ScrollBarThickness = 3
+	tabBar.ScrollBarImageColor3 = self.AccentColor
+	tabBar.ScrollingDirection = Enum.ScrollingDirection.Y
+	tabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
+	tabBar.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	tabBar.Parent = tabContainer
+	self.TabBar = tabBar
+
+	-- PADDING: ĐẨY TAB LÊN CAO NHẤT CÓ THỂ
+	local tabPadding = Instance.new("UIPadding")
+	tabPadding.PaddingTop = UDim.new(0, 0)   -- = 0 để sát lên trên cùng
+	tabPadding.PaddingBottom = UDim.new(0, 8)
+	tabPadding.PaddingLeft = UDim.new(0, 6)
+	tabPadding.PaddingRight = UDim.new(0, 6)
+	tabPadding.Parent = tabBar
 
 	-- UIListLayout
 	local tabList = Instance.new("UIListLayout")
-	tabList.Padding = UDim.new(0, 2)  -- Giảm khoảng cách
+	tabList.Padding = UDim.new(0, 2)
 	tabList.SortOrder = Enum.SortOrder.LayoutOrder
 	tabList.Parent = tabBar
 
@@ -628,7 +633,7 @@ end
 local Tab = {}
 Tab.__index = Tab
 
--- Hàm tự động cân bằng tab
+-- Hàm tự động cân bằng tab (FIX HOÀN TOÀN)
 function GUILib:_AutoBalanceTabs()
 	local tabBar = self.TabBar
 	if not tabBar then return end
@@ -648,28 +653,20 @@ function GUILib:_AutoBalanceTabs()
 	
 	-- Tính tổng chiều cao cần thiết
 	local totalHeight = 0
-	local spacing = 4
+	local spacing = 2
 	
 	for _, btn in ipairs(tabButtons) do
 		totalHeight = totalHeight + btn.Size.Y.Offset + spacing
 	end
 	
-	-- Thêm padding
-	local padding = 16
-	totalHeight = totalHeight + padding
+	-- Thêm padding dưới
+	totalHeight = totalHeight + 8
 	
 	-- Cập nhật CanvasSize
 	tabBar.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
 	
-	-- Đảm bảo hiển thị đúng tab đầu tiên
-	if self.ActiveTab and self.ActiveTab.Button then
-		local btnPos = self.ActiveTab.Button.AbsolutePosition.Y
-		local barPos = tabBar.AbsolutePosition.Y
-		local offset = btnPos - barPos - 10
-		if offset > 0 then
-			tabBar.CanvasPosition = Vector2.new(0, offset)
-		end
-	end
+	-- Reset vị trí cuộn về đầu
+	tabBar.CanvasPosition = Vector2.new(0, 0)
 end
 
 function GUILib:AddTab(name)
