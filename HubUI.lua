@@ -159,6 +159,9 @@ end
 --======================================================
 -- DỰNG GIAO DIỆN GỐC
 --======================================================
+--======================================================
+-- DỰNG GIAO DIỆN GỐC (PHẦN SỬA TAB BAR - NÂNG CAO)
+--======================================================
 function GUILib:_Build()
 	local T = self.GlassTransparency
 
@@ -170,7 +173,7 @@ function GUILib:_Build()
 	screenGui.Parent = PlayerGui
 	self.ScreenGui = screenGui
 
-	-- Bóng đổ mềm phía sau cửa sổ (tạo chiều sâu, cảm giác nổi lên)
+	-- Bóng đổ mềm phía sau cửa sổ
 	local shadow = Instance.new("ImageLabel")
 	shadow.Name = "Shadow"
 	shadow.BackgroundTransparency = 1
@@ -180,10 +183,9 @@ function GUILib:_Build()
 	shadow.ScaleType = Enum.ScaleType.Slice
 	shadow.SliceCenter = Rect.new(99, 99, 99, 99)
 	shadow.ZIndex = 0
-	-- shadow.Parent = screenGui
 	self.Shadow = shadow
 
-	-- Quầng sáng viền theo màu nhấn (glow nhẹ quanh cửa sổ)
+	-- Quầng sáng viền
 	local glow = Instance.new("ImageLabel")
 	glow.Name = "Glow"
 	glow.BackgroundTransparency = 1
@@ -193,10 +195,9 @@ function GUILib:_Build()
 	glow.ScaleType = Enum.ScaleType.Slice
 	glow.SliceCenter = Rect.new(99, 99, 99, 99)
 	glow.ZIndex = 0
-	-- glow.Parent = screenGui
 	self.GlowImage = glow
 
-	-- Khung chính (Main Frame) - có độ trong suốt nhẹ kiểu kính mờ
+	-- Khung chính
 	local main = Instance.new("Frame")
 	main.Name = "MainFrame"
 	main.Size = UDim2.new(0, self.Width, 0, self.Height)
@@ -210,7 +211,7 @@ function GUILib:_Build()
 	stroke(main, Color3.fromRGB(255, 255, 255), 1, 0.85)
 	self.MainFrame = main
 
-	-- Đồng bộ vị trí/kích thước bóng + glow theo MainFrame mỗi khi đổi
+	-- Đồng bộ bóng/glow
 	local function SyncOverlay()
 		shadow.Position = main.Position - UDim2.new(0, 18, 0, 12)
 		shadow.Size = main.Size + UDim2.new(0, 46, 0, 46)
@@ -222,7 +223,7 @@ function GUILib:_Build()
 	main:GetPropertyChangedSignal("Size"):Connect(SyncOverlay)
 	self._SyncOverlay = SyncOverlay
 
-	-- Thanh tiêu đề (Title Bar) - dùng để kéo thả, có lớp kính sáng nhẹ
+	-- Title Bar
 	local titleBar = Instance.new("Frame")
 	titleBar.Name = "TitleBar"
 	titleBar.Size = UDim2.new(1, 0, 0, 38)
@@ -234,7 +235,6 @@ function GUILib:_Build()
 	glassSheen(titleBar, 0.05)
 	self.TitleBar = titleBar
 
-	-- Che góc bo tròn phía dưới titlebar cho liền mạch
 	local titleFix = Instance.new("Frame")
 	titleFix.Name = "TitleFix"
 	titleFix.Size = UDim2.new(1, 0, 0, 14)
@@ -245,7 +245,6 @@ function GUILib:_Build()
 	titleFix.ZIndex = titleBar.ZIndex
 	titleFix.Parent = titleBar
 
-	-- Đường kẻ phân cách mảnh dưới title bar
 	local titleLine = Instance.new("Frame")
 	titleLine.Name = "TitleLine"
 	titleLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -256,7 +255,6 @@ function GUILib:_Build()
 	titleLine.ZIndex = 2
 	titleLine.Parent = titleBar
 
-	-- Chấm màu nhấn nhỏ trước tiêu đề
 	local dot = Instance.new("Frame")
 	dot.BackgroundColor3 = self.AccentColor
 	dot.Position = UDim2.new(0, 12, 0.5, -3)
@@ -304,7 +302,7 @@ function GUILib:_Build()
 		self:Toggle(false)
 	end)
 
-	-- Nút thu nhỏ (minimize)
+	-- Nút thu nhỏ
 	local minBtn = Instance.new("TextButton")
 	minBtn.Name = "MinimizeButton"
 	minBtn.AutoButtonColor = false
@@ -339,10 +337,11 @@ function GUILib:_Build()
 
 	makeDraggable(titleBar, main)
 
-	-- Thanh Tab (bên trái) - panel kính mờ, tối hơn nền chính một chút.
-	-- Dùng ScrollingFrame (không phải Frame thường) để KHÔNG BAO GIỜ bị
-	-- giới hạn số lượng tab: dù thêm 2, 5, hay 20 tab, danh sách sẽ tự
-	-- cuộn thay vì bị cắt mất bởi MainFrame.ClipsDescendants.
+	-- ======================================================
+	-- TAB BAR - NÂNG CAO LÊN (GIẢM PADDING TRÊN)
+	-- ======================================================
+	
+	-- Thanh Tab bên trái
 	local tabBar = Instance.new("ScrollingFrame")
 	tabBar.Name = "TabBar"
 	tabBar.Size = UDim2.new(0, 104, 1, -38)
@@ -353,11 +352,23 @@ function GUILib:_Build()
 	tabBar.ScrollBarThickness = 3
 	tabBar.ScrollBarImageColor3 = self.AccentColor
 	tabBar.ScrollingDirection = Enum.ScrollingDirection.Y
-	tabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
+	
+	-- Tự động tính CanvasSize
 	tabBar.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	tabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
+	
+	-- GIẢM PADDING TRÊN ĐỂ NÂNG TAB LÊN CAO
+	local tabPadding = Instance.new("UIPadding")
+	tabPadding.PaddingTop = UDim.new(0, 2)   -- Giảm từ 8 xuống 2
+	tabPadding.PaddingBottom = UDim.new(0, 8)
+	tabPadding.PaddingLeft = UDim.new(0, 6)
+	tabPadding.PaddingRight = UDim.new(0, 6)
+	tabPadding.Parent = tabBar
+	
 	tabBar.Parent = main
 	self.TabBar = tabBar
 
+	-- Đường kẻ phân cách
 	local tabBarLine = Instance.new("Frame")
 	tabBarLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	tabBarLine.BackgroundTransparency = 0.92
@@ -367,19 +378,13 @@ function GUILib:_Build()
 	tabBarLine.ZIndex = 3
 	tabBarLine.Parent = tabBar
 
+	-- UIListLayout
 	local tabList = Instance.new("UIListLayout")
-	tabList.Padding = UDim.new(0, 4)
+	tabList.Padding = UDim.new(0, 2)  -- Giảm khoảng cách
 	tabList.SortOrder = Enum.SortOrder.LayoutOrder
 	tabList.Parent = tabBar
 
-	local tabPadding = Instance.new("UIPadding")
-	tabPadding.PaddingTop = UDim.new(0, 8)
-	tabPadding.PaddingLeft = UDim.new(0, 6)
-	tabPadding.PaddingRight = UDim.new(0, 6)
-	tabPadding.PaddingBottom = UDim.new(0, 8)
-	tabPadding.Parent = tabBar
-
-	-- Vùng nội dung (bên phải)
+	-- Vùng nội dung
 	local content = Instance.new("Frame")
 	content.Name = "ContentArea"
 	content.Size = UDim2.new(1, -104, 1, -38)
@@ -390,7 +395,7 @@ function GUILib:_Build()
 	content.Parent = main
 	self.ContentArea = content
 
-	-- Tay cầm resize (góc dưới phải) - có biểu tượng chấm nhỏ dễ nhìn
+	-- Resize Handle
 	if self.Resizable then
 		local resizeHandle = Instance.new("Frame")
 		resizeHandle.Name = "ResizeHandle"
@@ -439,7 +444,7 @@ function GUILib:_Build()
 		end)
 	end
 
-	-- Cho phép mở lại bằng phím tắt (mặc định RightShift) khi đóng
+	-- Phím tắt
 	self._open = true
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.KeyCode == self.ToggleKey then
@@ -447,7 +452,7 @@ function GUILib:_Build()
 		end
 	end)
 
-	-- Hiệu ứng mở cửa sổ mượt (fade + scale nhẹ lúc khởi tạo)
+	-- Hiệu ứng mở cửa sổ
 	main.BackgroundTransparency = 1
 	main.Size = UDim2.new(0, self.Width * 0.94, 0, self.Height * 0.94)
 	shadow.ImageTransparency = 1
@@ -623,7 +628,7 @@ end
 local Tab = {}
 Tab.__index = Tab
 
--- Hàm tự động cân bằng tab
+-- Hàm tự động cân bằng tab (CẬP NHẬT)
 function GUILib:_AutoBalanceTabs()
 	local tabBar = self.TabBar
 	if not tabBar then return end
@@ -643,26 +648,29 @@ function GUILib:_AutoBalanceTabs()
 	
 	-- Tính tổng chiều cao cần thiết
 	local totalHeight = 0
-	local spacing = 4
+	local spacing = 2  -- Giảm spacing
 	
 	for _, btn in ipairs(tabButtons) do
 		totalHeight = totalHeight + btn.Size.Y.Offset + spacing
 	end
 	
-	-- Thêm padding
-	local padding = 16
+	-- Thêm padding (ít hơn để nâng lên cao)
+	local padding = 10  -- Giảm từ 16 xuống 10
 	totalHeight = totalHeight + padding
 	
 	-- Cập nhật CanvasSize
 	tabBar.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
 	
-	-- Đảm bảo hiển thị đúng tab đầu tiên
+	-- Đảm bảo hiển thị đúng tab đầu tiên (cuộn lên đầu)
 	if self.ActiveTab and self.ActiveTab.Button then
 		local btnPos = self.ActiveTab.Button.AbsolutePosition.Y
 		local barPos = tabBar.AbsolutePosition.Y
-		local offset = btnPos - barPos - 10
-		if offset > 0 then
+		local offset = btnPos - barPos - 5
+		if offset > 5 then  -- Chỉ cuộn nếu tab bị khuất
 			tabBar.CanvasPosition = Vector2.new(0, offset)
+		else
+			-- Cuộn lên đầu để hiển thị tab đầu tiên
+			tabBar.CanvasPosition = Vector2.new(0, 0)
 		end
 	end
 end
