@@ -1,5 +1,6 @@
 --[[
     FloatingGUI.lua  —  Bản nâng cấp (v3): Hỗ trợ theme đa màu, cải thiện UI components
+    Mặc định: KHÔNG có hiệu ứng màu (ColorMode = "none")
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -256,6 +257,89 @@ local function makeDraggable(dragHandle, target)
 end
 
 --======================================================
+-- RAINBOW EFFECT
+--======================================================
+local RainbowEffect = {}
+RainbowEffect.__index = RainbowEffect
+
+function RainbowEffect.new(window, mode)
+    local self = setmetatable({}, RainbowEffect)
+    self.Window = window
+    self.Mode = mode or "rainbow"
+    self.Running = false
+    self.Hue = 0
+    self.RandomColors = {}
+    self.CurrentIndex = 1
+    self.Timer = nil
+    
+    -- Tạo 7 màu random
+    for i = 1, 7 do
+        table.insert(self.RandomColors, Color3.fromHSV(math.random(), 1, 1))
+    end
+    
+    return self
+end
+
+function RainbowEffect:Start()
+    if self.Running then return end
+    self.Running = true
+    
+    if self.Mode == "rainbow" then
+        task.spawn(function()
+            while self.Running do
+                self.Hue = (self.Hue + 0.005) % 1
+                self.Window:SetAccentColor(Color3.fromHSV(self.Hue, 1, 1))
+                task.wait(0.01)
+            end
+        end)
+    elseif self.Mode == "random" then
+        self:StartRandomMode()
+    end
+end
+
+function RainbowEffect:StartRandomMode()
+    if self.Timer then return end
+    
+    self.Window:SetAccentColor(self.RandomColors[1])
+    
+    self.Timer = task.spawn(function()
+        while self.Running do
+            task.wait(0.5)
+            
+            local newIndex
+            repeat
+                newIndex = math.random(1, #self.RandomColors)
+            until newIndex ~= self.CurrentIndex or #self.RandomColors == 1
+            
+            self.CurrentIndex = newIndex
+            self.Window:SetAccentColor(self.RandomColors[newIndex])
+        end
+    end)
+end
+
+function RainbowEffect:Stop()
+    self.Running = false
+    if self.Timer then
+        task.cancel(self.Timer)
+        self.Timer = nil
+    end
+end
+
+function RainbowEffect:SetMode(mode)
+    self.Mode = mode
+    self:Stop()
+    self:Start()
+end
+
+function RainbowEffect:RefreshRandomColors()
+    for i = 1, 7 do
+        self.RandomColors[i] = Color3.fromHSV(math.random(), 1, 1)
+    end
+    self.CurrentIndex = 1
+    self.Window:SetAccentColor(self.RandomColors[1])
+end
+
+--======================================================
 -- LIBRARY CHÍNH
 --======================================================
 local GUILib = {}
@@ -285,47 +369,56 @@ function GUILib.new(config)
     self.Resizable = (config.Resizable == nil) and true or config.Resizable
     self.GlassTransparency = config.Transparency or 0.16
     self.ToggleKey = config.ToggleKey or Enum.KeyCode.RightShift
+    
+    -- Mặc định KHÔNG có hiệu ứng màu
+    self.ColorMode = "none" -- Luôn là "none" khi tạo mới
+    self.RainbowEffect = nil
 
     self.Tabs = {}
     self.ActiveTab = nil
 
     self:_Build()
+    
+    -- KHÔNG tự động bật hiệu ứng
+    -- Người dùng phải gọi window:StartColorEffect("rainbow") hoặc "random" để bật
 
     return self
 end
 
-function GUILib:ApplyTheme(themeName)
-    local theme = Themes[themeName]
-    if not theme then return end
+--======================================================
+-- API COLOR EFFECT
+--======================================================
+function GUILib:StartColorEffect(mode)
+    -- Dừng hiệu ứng cũ nếu có
+    if self.RainbowEffect then
+        self.RainbowEffect:Stop()
+    end
     
-    self.ThemeName = themeName
-    self.ThemeColors = theme
-    self.ThemeColor = theme.Background
-    self.TextColor = theme.Text
-    self.SecondaryColor = theme.Secondary
-    self.BorderColor = theme.Border
-    
-    -- Cập nhật UI
-    self:SetThemeColor(theme.Background)
-    self:SetAccentColor(self.AccentColor) -- Giữ accent hiện tại hoặc reset về theme accent
-    
-    -- Cập nhật các thành phần khác
-    self:UpdateUIComponents()
+    -- Tạo hiệu ứng mới
+    self.RainbowEffect = RainbowEffect.new(self, mode or "rainbow")
+    self.RainbowEffect:Start()
+    self.ColorMode = mode or "rainbow"
 end
 
-function GUILib:UpdateUIComponents()
-    local T = self.GlassTransparency
-    
-    -- Cập nhật màu nền cho các thành phần
-    for _, tab in ipairs(self.Tabs) do
-        if tab.Page then
-            -- Cập nhật các components trong tab
-            for _, child in ipairs(tab.Page:GetChildren()) do
-                if child:IsA("Frame") and child.BackgroundTransparency < 1 then
-                    child.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                end
-            end
-        end
+function GUILib:StopColorEffect()
+    if self.RainbowEffect then
+        self.RainbowEffect:Stop()
+        self.RainbowEffect = nil
+        self.ColorMode = "none"
+    end
+end
+
+function GUILib:SetColorMode(mode)
+    if mode == "none" then
+        self:StopColorEffect()
+    else
+        self:StartColorEffect(mode)
+    end
+end
+
+function GUILib:RefreshRandomColors()
+    if self.RainbowEffect and self.RainbowEffect.Mode == "random" then
+        self.RainbowEffect:RefreshRandomColors()
     end
 end
 
@@ -634,9 +727,36 @@ function GUILib:SetTheme(themeName)
     self:ApplyTheme(themeName)
 end
 
+function GUILib:ApplyTheme(themeName)
+    local theme = Themes[themeName]
+    if not theme then return end
+    
+    self.ThemeName = themeName
+    self.ThemeColors = theme
+    self.ThemeColor = theme.Background
+    self.TextColor = theme.Text
+    self.SecondaryColor = theme.Secondary
+    self.BorderColor = theme.Border
+    
+    self:SetThemeColor(theme.Background)
+    self:SetAccentColor(self.AccentColor)
+    self:UpdateUIComponents()
+end
+
+function GUILib:UpdateUIComponents()
+    for _, tab in ipairs(self.Tabs) do
+        if tab.Page then
+            for _, child in ipairs(tab.Page:GetChildren()) do
+                if child:IsA("Frame") and child.BackgroundTransparency < 1 then
+                    child.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                end
+            end
+        end
+    end
+end
+
 function GUILib:SetThemeColor(color)
     self.ThemeColor = color
-    local T = self.GlassTransparency
 
     tween(self.MainFrame, {BackgroundColor3 = color}, 0.2)
     tween(self.TitleBar, {BackgroundColor3 = color}, 0.2)
@@ -696,6 +816,9 @@ function GUILib:Toggle(visible)
 end
 
 function GUILib:Destroy()
+    if self.RainbowEffect then
+        self.RainbowEffect:Stop()
+    end
     self.ScreenGui:Destroy()
 end
 
@@ -924,7 +1047,6 @@ end
 -- COMPONENTS
 --======================================================
 
--- Button với border cải thiện
 function Tab:AddButton(name, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 36)
@@ -978,7 +1100,6 @@ function Tab:AddButton(name, callback)
     return btn
 end
 
--- Toggle với màu sắc cải thiện và border
 function Tab:AddToggle(name, default, callback)
     local holder = Instance.new("Frame")
     holder.Size = UDim2.new(1, 0, 0, 34)
@@ -1029,7 +1150,6 @@ function Tab:AddToggle(name, default, callback)
         tween(knob, {Position = s and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}, 0.15, Enum.EasingStyle.Back)
     end
 
-    -- Cập nhật border khi toggle
     local toggleStroke = switch:FindFirstChild("UIStroke")
     if toggleStroke then
         toggleStroke.Color = self.Library.ThemeColors.Border
@@ -1050,7 +1170,6 @@ function Tab:AddToggle(name, default, callback)
     }
 end
 
--- Slider với border và màu sắc cải thiện
 function Tab:AddSlider(name, min, max, default, callback)
     local holder = Instance.new("Frame")
     holder.Size = UDim2.new(1, 0, 0, 50)
@@ -1141,7 +1260,6 @@ function Tab:AddSlider(name, min, max, default, callback)
     return holder
 end
 
--- Dropdown với border và màu sắc cải thiện
 function Tab:AddDropdown(name, options, callback)
     local holder = Instance.new("Frame")
     holder.Size = UDim2.new(1, 0, 0, 36)
@@ -1226,7 +1344,6 @@ function Tab:AddDropdown(name, options, callback)
     return holder
 end
 
--- Textbox với border cải thiện
 function Tab:AddTextbox(name, placeholder, callback)
     local holder = Instance.new("Frame")
     holder.Size = UDim2.new(1, 0, 0, 52)
