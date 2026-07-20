@@ -622,6 +622,7 @@ function GUILib:AddTab(name)
 	tabButton.TextSize = 13
 	tabButton.TextColor3 = Color3.fromRGB(170, 170, 178)
 	tabButton.TextXAlignment = Enum.TextXAlignment.Left
+	tabButton.TextTruncate = Enum.TextTruncate.AtEnd
 	tabButton.Parent = self.TabBar
 	corner(tabButton, 8)
 
