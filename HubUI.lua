@@ -655,7 +655,7 @@ function GUILib:_AutoBalanceTabs()
 	end
 	
 	-- Thêm padding (ít hơn để nâng lên cao)
-	local padding = 10  -- Giảm từ 16 xuống 10
+	local padding = 100  -- Giảm từ 16 xuống 10
 	totalHeight = totalHeight + padding
 	
 	-- Cập nhật CanvasSize
