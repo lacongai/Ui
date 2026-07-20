@@ -368,15 +368,15 @@ function GUILib:_Build()
 	tabBarLine.Parent = tabBar
 
 	local tabList = Instance.new("UIListLayout")
-	tabList.Padding = UDim.new(0, 2)
+	tabList.Padding = UDim.new(0, 1)
 	tabList.SortOrder = Enum.SortOrder.LayoutOrder
 	tabList.Parent = tabBar
 
 	local tabPadding = Instance.new("UIPadding")
-	tabPadding.PaddingTop = UDim.new(0, 4)
-	tabPadding.PaddingLeft = UDim.new(0, 6)
-	tabPadding.PaddingRight = UDim.new(0, 6)
-	tabPadding.PaddingBottom = UDim.new(0, 4)
+	tabPadding.PaddingTop = UDim.new(0, 2)
+	tabPadding.PaddingLeft = UDim.new(0, 4)
+	tabPadding.PaddingRight = UDim.new(0, 4)
+	tabPadding.PaddingBottom = UDim.new(0, 2)
 	tabPadding.Parent = tabBar
 
 	-- Vùng nội dung (bên phải)
