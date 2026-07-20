@@ -343,15 +343,20 @@ function GUILib:_Build()
 	-- Dùng ScrollingFrame (không phải Frame thường) để KHÔNG BAO GIỜ bị
 	-- giới hạn số lượng tab: dù thêm 2, 5, hay 20 tab, danh sách sẽ tự
 	-- cuộn thay vì bị cắt mất bởi MainFrame.ClipsDescendants.
-	-- Thanh Tab (bên trái) - DÙNG FRAME THƯỜNG (không bị lỗi cuộn)
-local tabBar = Instance.new("Frame")
+	-- Thanh Tab (bên trái) - FIX LỖI CUỘN
+local tabBar = Instance.new("ScrollingFrame")
 tabBar.Name = "TabBar"
 tabBar.Size = UDim2.new(0, 104, 1, -38)
 tabBar.Position = UDim2.new(0, 0, 0, 38)
 tabBar.BackgroundColor3 = self.ThemeColor:Lerp(Color3.new(0, 0, 0), 0.22)
 tabBar.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
 tabBar.BorderSizePixel = 0
-tabBar.ClipsDescendants = true
+tabBar.ScrollBarThickness = 3
+tabBar.ScrollBarImageColor3 = self.AccentColor
+tabBar.ScrollingDirection = Enum.ScrollingDirection.Y
+tabBar.CanvasSize = UDim2.new(0, 0, 0, 0)
+-- ✅ SỬA: bỏ AutomaticCanvasSize, tính thủ công
+-- tabBar.AutomaticCanvasSize = Enum.AutomaticSize.Y
 tabBar.Parent = main
 self.TabBar = tabBar
 
@@ -376,101 +381,104 @@ tabPadding.PaddingRight = UDim.new(0, 6)
 tabPadding.PaddingBottom = UDim.new(0, 8)
 tabPadding.Parent = tabBar
 
--- ✅ Đồng bộ kích thước tab bar khi thay đổi
-local function updateTabBarSize()
-    local totalHeight = 16 -- padding
+-- ✅ THÊM: Cập nhật CanvasSize khi thêm tab
+local function updateTabBarCanvas()
+    local totalHeight = 16 -- padding top + bottom
     for _, child in ipairs(tabBar:GetChildren()) do
         if child:IsA("TextButton") then
             totalHeight = totalHeight + child.Size.Y.Offset + 4
         end
     end
-    tabBar.Size = UDim2.new(0, 104, 1, -38)
+    tabBar.CanvasSize = UDim2.new(0, 0, 0, math.max(totalHeight, tabBar.Size.Y.Offset))
 end
 
-tabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabBarSize)
-task.wait(0.1)
-updateTabBarSize()
+-- Kết nối sự kiện cập nhật
+tabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabBarCanvas)
+-- Cập nhật lần đầu
+task.spawn(function()
+    task.wait(0.1)
+    updateTabBarCanvas()
+end)
 
-	-- Vùng nội dung (bên phải)
-	local content = Instance.new("Frame")
-	content.Name = "ContentArea"
-	content.Size = UDim2.new(1, -104, 1, -38)
-	content.Position = UDim2.new(0, 104, 0, 38)
-	content.BackgroundColor3 = self.ThemeColor
-	content.BackgroundTransparency = T
-	content.BorderSizePixel = 0
-	content.Parent = main
-	self.ContentArea = content
+-- Vùng nội dung (bên phải)
+local content = Instance.new("Frame")
+content.Name = "ContentArea"
+content.Size = UDim2.new(1, -104, 1, -38)
+content.Position = UDim2.new(0, 104, 0, 38)
+content.BackgroundColor3 = self.ThemeColor
+content.BackgroundTransparency = T
+content.BorderSizePixel = 0
+content.Parent = main
+self.ContentArea = content
 
-	-- Tay cầm resize (góc dưới phải) - có biểu tượng chấm nhỏ dễ nhìn
-	if self.Resizable then
-		local resizeHandle = Instance.new("Frame")
-		resizeHandle.Name = "ResizeHandle"
-		resizeHandle.Size = UDim2.new(0, 18, 0, 18)
-		resizeHandle.Position = UDim2.new(1, -18, 1, -18)
-		resizeHandle.BackgroundTransparency = 1
-		resizeHandle.Parent = main
+-- Tay cầm resize (góc dưới phải) - có biểu tượng chấm nhỏ dễ nhìn
+if self.Resizable then
+    local resizeHandle = Instance.new("Frame")
+    resizeHandle.Name = "ResizeHandle"
+    resizeHandle.Size = UDim2.new(0, 18, 0, 18)
+    resizeHandle.Position = UDim2.new(1, -18, 1, -18)
+    resizeHandle.BackgroundTransparency = 1
+    resizeHandle.Parent = main
 
-		for i = 0, 2 do
-			for j = 0, (2 - i) do
-				local grip = Instance.new("Frame")
-				grip.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				grip.BackgroundTransparency = 0.55
-				grip.BorderSizePixel = 0
-				grip.Size = UDim2.new(0, 2, 0, 2)
-				grip.Position = UDim2.new(1, -5 - i * 5, 1, -5 - j * 5)
-				grip.Parent = resizeHandle
-				corner(grip, 1)
-			end
-		end
+    for i = 0, 2 do
+        for j = 0, (2 - i) do
+            local grip = Instance.new("Frame")
+            grip.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            grip.BackgroundTransparency = 0.55
+            grip.BorderSizePixel = 0
+            grip.Size = UDim2.new(0, 2, 0, 2)
+            grip.Position = UDim2.new(1, -5 - i * 5, 1, -5 - j * 5)
+            grip.Parent = resizeHandle
+            corner(grip, 1)
+        end
+    end
 
-		local resizing = false
-		local startInputPos, startSize
+    local resizing = false
+    local startInputPos, startSize
 
-		resizeHandle.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-				resizing = true
-				startInputPos = input.Position
-				startSize = main.Size
+    resizeHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            resizing = true
+            startInputPos = input.Position
+            startSize = main.Size
 
-				input.Changed:Connect(function()
-					if input.UserInputState == Enum.UserInputState.End then
-						resizing = false
-					end
-				end)
-			end
-		end)
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    resizing = false
+                end
+            end)
+        end
+    end)
 
-		UserInputService.InputChanged:Connect(function(input)
-			if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-				local delta = input.Position - startInputPos
-				local newWidth = math.max(250, startSize.X.Offset + delta.X)
-				local newHeight = math.max(200, startSize.Y.Offset + delta.Y)
-				self:SetSize(newWidth, newHeight)
-			end
-		end)
-	end
-
-	-- Cho phép mở lại bằng phím tắt (mặc định RightShift) khi đóng
-	self._open = true
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if not processed and input.KeyCode == self.ToggleKey then
-			self:Toggle(not self._open)
-		end
-	end)
-
-	-- Hiệu ứng mở cửa sổ mượt (fade + scale nhẹ lúc khởi tạo)
-	main.BackgroundTransparency = 1
-	main.Size = UDim2.new(0, self.Width * 0.94, 0, self.Height * 0.94)
-	shadow.ImageTransparency = 1
-	glow.ImageTransparency = 1
-	tween(main, {
-		Size = UDim2.new(0, self.Width, 0, self.Height),
-		BackgroundTransparency = T,
-	}, 0.22, Enum.EasingStyle.Back)
-	tween(shadow, {ImageTransparency = 0.35}, 0.3)
-	tween(glow, {ImageTransparency = 0.82}, 0.3)
+    UserInputService.InputChanged:Connect(function(input)
+        if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - startInputPos
+            local newWidth = math.max(250, startSize.X.Offset + delta.X)
+            local newHeight = math.max(200, startSize.Y.Offset + delta.Y)
+            self:SetSize(newWidth, newHeight)
+        end
+    end)
 end
+
+-- Cho phép mở lại bằng phím tắt (mặc định RightShift) khi đóng
+self._open = true
+UserInputService.InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == self.ToggleKey then
+        self:Toggle(not self._open)
+    end
+end)
+
+-- Hiệu ứng mở cửa sổ mượt (fade + scale nhẹ lúc khởi tạo)
+main.BackgroundTransparency = 1
+main.Size = UDim2.new(0, self.Width * 0.94, 0, self.Height * 0.94)
+shadow.ImageTransparency = 1
+glow.ImageTransparency = 1
+tween(main, {
+    Size = UDim2.new(0, self.Width, 0, self.Height),
+    BackgroundTransparency = T,
+}, 0.22, Enum.EasingStyle.Back)
+tween(shadow, {ImageTransparency = 0.35}, 0.3)
+tween(glow, {ImageTransparency = 0.82}, 0.3)
 
 --======================================================
 -- API: ĐỔI MÀU / KÍCH THƯỚC BẰNG SCRIPT (giữ nguyên gốc)
