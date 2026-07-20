@@ -368,15 +368,15 @@ function GUILib:_Build()
 	tabBarLine.Parent = tabBar
 
 	local tabList = Instance.new("UIListLayout")
-	tabList.Padding = UDim.new(0, 2)
+	tabList.Padding = UDim.new(0, 4)
 	tabList.SortOrder = Enum.SortOrder.LayoutOrder
 	tabList.Parent = tabBar
 
 	local tabPadding = Instance.new("UIPadding")
-	tabPadding.PaddingTop = UDim.new(0, 4)
-	tabPadding.PaddingLeft = UDim.new(0, 4)
-	tabPadding.PaddingRight = UDim.new(0, 4)
-	tabPadding.PaddingBottom = UDim.new(0, 4)
+	tabPadding.PaddingTop = UDim.new(0, 8)
+	tabPadding.PaddingLeft = UDim.new(0, 6)
+	tabPadding.PaddingRight = UDim.new(0, 6)
+	tabPadding.PaddingBottom = UDim.new(0, 8)
 	tabPadding.Parent = tabBar
 
 	-- Vùng nội dung (bên phải)
@@ -617,8 +617,55 @@ end
 --======================================================
 -- HỆ THỐNG TAB
 --======================================================
+--======================================================
+-- HỆ THỐNG TAB (BẢN SỬA LỖI HOÀN CHỈNH)
+--======================================================
 local Tab = {}
 Tab.__index = Tab
+
+-- Hàm tự động cân bằng tab
+function GUILib:_AutoBalanceTabs()
+	local tabBar = self.TabBar
+	if not tabBar then return end
+	
+	-- Đợi UI cập nhật
+	task.wait()
+	
+	-- Lấy tất cả tab buttons
+	local tabButtons = {}
+	for _, child in ipairs(tabBar:GetChildren()) do
+		if child:IsA("TextButton") and child.Name:find("TabButton") then
+			table.insert(tabButtons, child)
+		end
+	end
+	
+	if #tabButtons == 0 then return end
+	
+	-- Tính tổng chiều cao cần thiết
+	local totalHeight = 0
+	local spacing = 4
+	
+	for _, btn in ipairs(tabButtons) do
+		totalHeight = totalHeight + btn.Size.Y.Offset + spacing
+	end
+	
+	-- Thêm padding
+	local padding = 16
+	totalHeight = totalHeight + padding
+	
+	-- Cập nhật CanvasSize
+	tabBar.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+	
+	-- Đảm bảo hiển thị đúng tab đầu tiên
+	if self.ActiveTab and self.ActiveTab.Button then
+		local btnPos = self.ActiveTab.Button.AbsolutePosition.Y
+		local barPos = tabBar.AbsolutePosition.Y
+		local offset = btnPos - barPos - 10
+		if offset > 0 then
+			tabBar.CanvasPosition = Vector2.new(0, offset)
+		end
+	end
+end
 
 function GUILib:AddTab(name)
 	local tabButton = Instance.new("TextButton")
@@ -636,7 +683,7 @@ function GUILib:AddTab(name)
 	tabButton.Parent = self.TabBar
 	corner(tabButton, 8)
 
-	-- Gạch chân/chỉ báo bên trái khi tab đang được chọn
+	-- Gạch chân/chỉ báo bên trái
 	local indicator = Instance.new("Frame")
 	indicator.Name = "Indicator"
 	indicator.AnchorPoint = Vector2.new(0, 0.5)
@@ -699,6 +746,12 @@ function GUILib:AddTab(name)
 	if #self.Tabs == 1 then
 		self:_SelectTab(tabObj)
 	end
+	
+	-- TỰ ĐỘNG CÂN BẰNG SAU KHI THÊM TAB
+	task.spawn(function()
+		task.wait(0.05)
+		self:_AutoBalanceTabs()
+	end)
 
 	return tabObj
 end
@@ -721,6 +774,24 @@ function GUILib:_SelectTab(tabObj)
 	end
 
 	self.ActiveTab = tabObj
+	
+	-- Tự động cuộn đến tab được chọn
+	task.spawn(function()
+		task.wait(0.05)
+		self:_AutoBalanceTabs()
+	end)
+end
+
+-- Gọi tự động cân bằng khi khởi tạo xong
+local originalBuild = GUILib._Build
+function GUILib:_Build()
+	originalBuild(self)
+	
+	-- Tự cân bằng sau khi build xong
+	task.spawn(function()
+		task.wait(0.1)
+		self:_AutoBalanceTabs()
+	end)
 end
 
 --======================================================
