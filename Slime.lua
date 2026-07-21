@@ -7,7 +7,6 @@
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -84,7 +83,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(20, 20, 30),
         GradientBottom = Color3.fromRGB(35, 35, 50)
     },
-    
     Ruby = {
         Primary = Color3.fromRGB(35, 18, 28),
         Secondary = Color3.fromRGB(50, 25, 38),
@@ -94,7 +92,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(255, 150, 200),
         GradientBottom = Color3.fromRGB(150, 220, 255)
     },
-    
     Ocean = {
         Primary = Color3.fromRGB(10, 22, 42),
         Secondary = Color3.fromRGB(18, 38, 60),
@@ -104,7 +101,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(80, 200, 255),
         GradientBottom = Color3.fromRGB(20, 80, 180)
     },
-    
     Emerald = {
         Primary = Color3.fromRGB(12, 28, 18),
         Secondary = Color3.fromRGB(22, 45, 30),
@@ -114,7 +110,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(80, 220, 140),
         GradientBottom = Color3.fromRGB(20, 120, 80)
     },
-    
     Purple = {
         Primary = Color3.fromRGB(22, 12, 38),
         Secondary = Color3.fromRGB(38, 22, 58),
@@ -124,7 +119,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(180, 120, 255),
         GradientBottom = Color3.fromRGB(100, 50, 200)
     },
-    
     Sunset = {
         Primary = Color3.fromRGB(42, 18, 22),
         Secondary = Color3.fromRGB(62, 28, 32),
@@ -134,7 +128,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(255, 150, 100),
         GradientBottom = Color3.fromRGB(255, 80, 80)
     },
-    
     Forest = {
         Primary = Color3.fromRGB(12, 25, 12),
         Secondary = Color3.fromRGB(22, 42, 22),
@@ -144,7 +137,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(120, 255, 150),
         GradientBottom = Color3.fromRGB(40, 180, 80)
     },
-    
     Midnight = {
         Primary = Color3.fromRGB(8, 8, 22),
         Secondary = Color3.fromRGB(18, 18, 42),
@@ -154,7 +146,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(150, 130, 255),
         GradientBottom = Color3.fromRGB(60, 30, 200)
     },
-    
     Aurora = {
         Primary = Color3.fromRGB(8, 22, 32),
         Secondary = Color3.fromRGB(18, 38, 52),
@@ -164,7 +155,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(100, 255, 220),
         GradientBottom = Color3.fromRGB(40, 180, 255)
     },
-    
     Candy = {
         Primary = Color3.fromRGB(42, 12, 28),
         Secondary = Color3.fromRGB(62, 22, 42),
@@ -174,7 +164,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(255, 150, 200),
         GradientBottom = Color3.fromRGB(255, 100, 150)
     },
-    
     Neon = {
         Primary = Color3.fromRGB(8, 8, 22),
         Secondary = Color3.fromRGB(18, 18, 38),
@@ -184,7 +173,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(0, 255, 200),
         GradientBottom = Color3.fromRGB(255, 0, 200)
     },
-    
     Galaxy = {
         Primary = Color3.fromRGB(12, 6, 28),
         Secondary = Color3.fromRGB(22, 12, 48),
@@ -194,7 +182,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(200, 150, 255),
         GradientBottom = Color3.fromRGB(100, 40, 200)
     },
-    
     Slime = {
         Primary = Color3.fromRGB(12, 28, 18),
         Secondary = Color3.fromRGB(22, 45, 30),
@@ -204,7 +191,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(80, 255, 150),
         GradientBottom = Color3.fromRGB(40, 200, 80)
     },
-    
     Windows = {
         Primary = Color3.fromRGB(20, 20, 28),
         Secondary = Color3.fromRGB(35, 35, 45),
@@ -214,7 +200,6 @@ local Themes = {
         GradientTop = Color3.fromRGB(20, 20, 28),
         GradientBottom = Color3.fromRGB(45, 45, 55)
     },
-    
     Discord = {
         Primary = Color3.fromRGB(32, 34, 38),
         Secondary = Color3.fromRGB(47, 49, 54),
@@ -304,13 +289,17 @@ function Window.new(config)
     self.Theme = theme
     self.IsRainbow = isRainbow
     self.Title = config.Title or "Apex Hub"
-    self.Width = config.Width or 520
-    self.Height = config.Height or 440
+    self.Width = math.clamp(config.Width or 520, 400, 800)
+    self.Height = math.clamp(config.Height or 440, 350, 700)
     self.Tabs = {}
     self.ActiveTab = nil
     self.Visible = true
     self.Hue = 0
-    self.MinSize = {Width = 400, Height = 300}
+    self.MinWidth = 350
+    self.MinHeight = 300
+    self.MaxWidth = 900
+    self.MaxHeight = 700
+    self.IsMinimized = false
     
     -- ScreenGui
     local screenGui = Instance.new("ScreenGui")
@@ -386,31 +375,31 @@ function Window.new(config)
     controls.BackgroundTransparency = 1
     controls.Parent = header
     
-    -- Resize Button (thu nhỏ)
-    local resizeBtn = Instance.new("TextButton")
-    resizeBtn.Size = UDim2.new(0, 30, 0, 30)
-    resizeBtn.Position = UDim2.new(0, 2, 0.5, -15)
-    resizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    resizeBtn.BackgroundTransparency = 0.85
-    resizeBtn.Text = "─"
-    resizeBtn.TextColor3 = Color3.fromRGB(200, 200, 220)
-    resizeBtn.TextSize = 16
-    resizeBtn.Font = Enum.Font.GothamBold
-    resizeBtn.AutoButtonColor = false
-    resizeBtn.Parent = controls
-    corner(resizeBtn, 6)
-    self.ResizeBtn = resizeBtn
+    -- Minimize Button
+    local minBtn = Instance.new("TextButton")
+    minBtn.Size = UDim2.new(0, 30, 0, 30)
+    minBtn.Position = UDim2.new(0, 2, 0.5, -15)
+    minBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    minBtn.BackgroundTransparency = 0.85
+    minBtn.Text = "─"
+    minBtn.TextColor3 = Color3.fromRGB(200, 200, 220)
+    minBtn.TextSize = 16
+    minBtn.Font = Enum.Font.GothamBold
+    minBtn.AutoButtonColor = false
+    minBtn.Parent = controls
+    corner(minBtn, 6)
+    self.MinBtn = minBtn
     
-    resizeBtn.MouseEnter:Connect(function()
-        tween(resizeBtn, {BackgroundTransparency = 0.3}, 0.1)
-        tween(resizeBtn, {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.1)
+    minBtn.MouseEnter:Connect(function()
+        tween(minBtn, {BackgroundTransparency = 0.3}, 0.1)
+        tween(minBtn, {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.1)
     end)
-    resizeBtn.MouseLeave:Connect(function()
-        tween(resizeBtn, {BackgroundTransparency = 0.85}, 0.1)
-        tween(resizeBtn, {TextColor3 = Color3.fromRGB(200, 200, 220)}, 0.1)
+    minBtn.MouseLeave:Connect(function()
+        tween(minBtn, {BackgroundTransparency = 0.85}, 0.1)
+        tween(minBtn, {TextColor3 = Color3.fromRGB(200, 200, 220)}, 0.1)
     end)
-    resizeBtn.MouseButton1Click:Connect(function()
-        self:ToggleResize()
+    minBtn.MouseButton1Click:Connect(function()
+        self:ToggleMinimize()
     end)
     
     -- Close Button
@@ -505,17 +494,31 @@ function Window.new(config)
         end
     end)
     
-    -- === RESIZE ===
-    local resizeData = {}
+    -- === RESIZE HANDLE (Có thể kéo) ===
     local resizeHandle = Instance.new("Frame")
-    resizeHandle.Size = UDim2.new(0, 16, 0, 16)
-    resizeHandle.Position = UDim2.new(1, -16, 1, -16)
+    resizeHandle.Size = UDim2.new(0, 20, 0, 20)
+    resizeHandle.Position = UDim2.new(1, -20, 1, -20)
     resizeHandle.BackgroundColor3 = theme.Accent
-    resizeHandle.BackgroundTransparency = 0.7
+    resizeHandle.BackgroundTransparency = 0.6
     resizeHandle.Parent = main
     corner(resizeHandle, 4)
     self.ResizeHandle = resizeHandle
     
+    -- Icon resize (3 chấm)
+    for i = 0, 2 do
+        for j = 0, 2 - i do
+            local dot = Instance.new("Frame")
+            dot.Size = UDim2.new(0, 3, 0, 3)
+            dot.Position = UDim2.new(1, -6 - i * 5, 1, -6 - j * 5)
+            dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            dot.BackgroundTransparency = 0.6
+            dot.BorderSizePixel = 0
+            dot.Parent = resizeHandle
+            corner(dot, 2)
+        end
+    end
+    
+    local resizeData = {}
     resizeHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             resizeData.active = true
@@ -531,8 +534,16 @@ function Window.new(config)
     UserInputService.InputChanged:Connect(function(input)
         if resizeData.active and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - resizeData.startPos
-            local newWidth = math.max(self.MinSize.Width, resizeData.startSize.X.Offset + delta.X)
-            local newHeight = math.max(self.MinSize.Height, resizeData.startSize.Y.Offset + delta.Y)
+            local newWidth = math.clamp(
+                resizeData.startSize.X.Offset + delta.X,
+                self.MinWidth,
+                self.MaxWidth
+            )
+            local newHeight = math.clamp(
+                resizeData.startSize.Y.Offset + delta.Y,
+                self.MinHeight,
+                self.MaxHeight
+            )
             self:SetSize(newWidth, newHeight)
         end
     end)
@@ -565,40 +576,42 @@ end
 
 function Window:SetAccentColor(color)
     self.Theme.Accent = color
-    -- Update border
     local border = self.Main:FindFirstChild("UIStroke")
-    if border then
-        border.Color = color
-    end
-    -- Update resize handle
+    if border then border.Color = color end
     if self.ResizeHandle then
         self.ResizeHandle.BackgroundColor3 = color
     end
-    -- Update tab bar scroll
     if self.TabBar then
         self.TabBar.ScrollBarImageColor3 = color
     end
 end
 
 function Window:SetSize(width, height)
+    width = math.clamp(width, self.MinWidth, self.MaxWidth)
+    height = math.clamp(height, self.MinHeight, self.MaxHeight)
     self.Width = width
     self.Height = height
     self.Main.Size = UDim2.new(0, width, 0, height)
     self.Main.Position = UDim2.new(0.5, -width/2, 0.5, -height/2)
-    -- Update shadow
     if self.Shadow then
         self.Shadow.Size = UDim2.new(1, 20, 1, 20)
         self.Shadow.Position = UDim2.new(0, -10, 0, -10)
     end
 end
 
-function Window:ToggleResize()
-    if self.Width == self.MinSize.Width and self.Height == self.MinSize.Height then
-        self:SetSize(520, 440)
-        self.ResizeBtn.Text = "─"
+function Window:ToggleMinimize()
+    self.IsMinimized = not self.IsMinimized
+    if self.IsMinimized then
+        local h = 50
+        tween(self.Main, {Size = UDim2.new(0, self.Width, 0, h)}, 0.25)
+        if self.MinBtn then
+            self.MinBtn.Text = "□"
+        end
     else
-        self:SetSize(self.MinSize.Width, self.MinSize.Height)
-        self.ResizeBtn.Text = "□"
+        tween(self.Main, {Size = UDim2.new(0, self.Width, 0, self.Height)}, 0.25)
+        if self.MinBtn then
+            self.MinBtn.Text = "─"
+        end
     end
 end
 
