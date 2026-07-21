@@ -1,7 +1,7 @@
 --[[
-    ApexUI.lua - Thư viện GUI Hiện Đại (FIXED)
-    - Fix lỗi không hiển thị components
-    - Fix resize handle hoạt động
+    ApexUI.lua - Thư viện GUI Hiện Đại
+    Phong cách: Slime UI / Windows 11 / Discord / Apple
+    Hỗ trợ theme, gradient, animation mượt mà
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -300,7 +300,6 @@ function Window.new(config)
     self.MaxWidth = 900
     self.MaxHeight = 700
     self.IsMinimized = false
-    self.TabObjects = {} -- Lưu các TabComponent
     
     -- ScreenGui
     local screenGui = Instance.new("ScreenGui")
@@ -885,7 +884,6 @@ local TabComponent = {}
 TabComponent.__index = TabComponent
 
 function Window:GetTabObject(tab)
-    -- Tạo TabComponent mới
     local obj = setmetatable({}, TabComponent)
     obj.Window = self
     obj.Page = tab.Page
