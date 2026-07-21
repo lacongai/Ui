@@ -1,7 +1,7 @@
 --[[
-    ApexUI.lua - Thư viện GUI Hiện Đại
-    Phong cách: Slime UI / Windows 11 / Discord / Apple
-    Hỗ trợ theme, gradient, animation mượt mà
+    ApexUI.lua - Thư viện GUI Hiện Đại (FIXED)
+    - Fix hiển thị components trong tab
+    - Fix resize handle hoạt động
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -494,7 +494,7 @@ function Window.new(config)
         end
     end)
     
-    -- === RESIZE HANDLE (FIX: Có thể kéo) ===
+    -- === RESIZE HANDLE ===
     local resizeHandle = Instance.new("Frame")
     resizeHandle.Size = UDim2.new(0, 24, 0, 24)
     resizeHandle.Position = UDim2.new(1, -24, 1, -24)
@@ -505,8 +505,7 @@ function Window.new(config)
     stroke(resizeHandle, theme.Accent, 1, 0.2)
     self.ResizeHandle = resizeHandle
     
-    -- Icon resize (3 chấm)
-    local dots = {}
+    -- 3 dots
     for i = 0, 2 do
         for j = 0, 2 - i do
             local dot = Instance.new("Frame")
@@ -517,41 +516,24 @@ function Window.new(config)
             dot.BorderSizePixel = 0
             dot.Parent = resizeHandle
             corner(dot, 2)
-            table.insert(dots, dot)
         end
     end
     
-    -- Hover effect cho resize handle
     resizeHandle.MouseEnter:Connect(function()
         tween(resizeHandle, {BackgroundTransparency = 0.1}, 0.15)
-        for _, dot in ipairs(dots) do
-            tween(dot, {BackgroundTransparency = 0.2}, 0.15)
-        end
     end)
     resizeHandle.MouseLeave:Connect(function()
         tween(resizeHandle, {BackgroundTransparency = 0.3}, 0.15)
-        for _, dot in ipairs(dots) do
-            tween(dot, {BackgroundTransparency = 0.5}, 0.15)
-        end
     end)
     
-    -- Resize logic
-    local resizeData = {
-        active = false,
-        startPos = nil,
-        startSize = nil,
-        startMainPos = nil
-    }
-    
+    local resizeData = {active = false}
     resizeHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             resizeData.active = true
             resizeData.startPos = input.Position
             resizeData.startSize = main.Size
-            resizeData.startMainPos = main.Position
         end
     end)
-    
     resizeHandle.InputEnded:Connect(function()
         resizeData.active = false
     end)
@@ -559,32 +541,9 @@ function Window.new(config)
     UserInputService.InputChanged:Connect(function(input)
         if resizeData.active and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - resizeData.startPos
-            local newWidth = math.clamp(
-                resizeData.startSize.X.Offset + delta.X,
-                self.MinWidth,
-                self.MaxWidth
-            )
-            local newHeight = math.clamp(
-                resizeData.startSize.Y.Offset + delta.Y,
-                self.MinHeight,
-                self.MaxHeight
-            )
-            
-            -- Cập nhật kích thước và vị trí
-            main.Size = UDim2.new(0, newWidth, 0, newHeight)
-            main.Position = UDim2.new(
-                0.5, -newWidth/2,
-                0.5, -newHeight/2
-            )
-            
-            self.Width = newWidth
-            self.Height = newHeight
-            
-            -- Update shadow
-            if self.Shadow then
-                self.Shadow.Size = UDim2.new(1, 20, 1, 20)
-                self.Shadow.Position = UDim2.new(0, -10, 0, -10)
-            end
+            local newWidth = math.clamp(resizeData.startSize.X.Offset + delta.X, self.MinWidth, self.MaxWidth)
+            local newHeight = math.clamp(resizeData.startSize.Y.Offset + delta.Y, self.MinHeight, self.MaxHeight)
+            self:SetSize(newWidth, newHeight)
         end
     end)
     
@@ -620,8 +579,8 @@ function Window:SetAccentColor(color)
     if border then border.Color = color end
     if self.ResizeHandle then
         self.ResizeHandle.BackgroundColor3 = color
-        local stroke = self.ResizeHandle:FindFirstChild("UIStroke")
-        if stroke then stroke.Color = color end
+        local s = self.ResizeHandle:FindFirstChild("UIStroke")
+        if s then s.Color = color end
     end
     if self.TabBar then
         self.TabBar.ScrollBarImageColor3 = color
@@ -635,25 +594,16 @@ function Window:SetSize(width, height)
     self.Height = height
     self.Main.Size = UDim2.new(0, width, 0, height)
     self.Main.Position = UDim2.new(0.5, -width/2, 0.5, -height/2)
-    if self.Shadow then
-        self.Shadow.Size = UDim2.new(1, 20, 1, 20)
-        self.Shadow.Position = UDim2.new(0, -10, 0, -10)
-    end
 end
 
 function Window:ToggleMinimize()
     self.IsMinimized = not self.IsMinimized
     if self.IsMinimized then
-        local h = 50
-        tween(self.Main, {Size = UDim2.new(0, self.Width, 0, h)}, 0.25)
-        if self.MinBtn then
-            self.MinBtn.Text = "□"
-        end
+        tween(self.Main, {Size = UDim2.new(0, self.Width, 0, 50)}, 0.25)
+        self.MinBtn.Text = "□"
     else
         tween(self.Main, {Size = UDim2.new(0, self.Width, 0, self.Height)}, 0.25)
-        if self.MinBtn then
-            self.MinBtn.Text = "─"
-        end
+        self.MinBtn.Text = "─"
     end
 end
 
@@ -678,7 +628,6 @@ function Window:Close()
         Position = UDim2.new(0.5, 0, 0.5, 0),
         BackgroundTransparency = 1
     }, 0.3, Enum.EasingStyle.Back)
-    tween(self.Shadow, {ImageTransparency = 1}, 0.3)
     task.delay(0.35, function()
         self.ScreenGui:Destroy()
     end)
@@ -701,12 +650,7 @@ function Window:Notify(config)
     stroke(notif, self.Theme.Border, 1, 0.25)
     applyGradient(notif, self.Theme.GradientTop, self.Theme.GradientBottom, 90)
     
-    local iconMap = {
-        Success = "✔",
-        Warning = "⚠",
-        Error = "✖",
-        Info = "ⓘ"
-    }
+    local iconMap = {Success = "✔", Warning = "⚠", Error = "✖", Info = "ⓘ"}
     local icon = iconMap[config.Type] or "◆"
     local iconColor = config.Type == "Success" and Color3.fromRGB(80, 220, 120) or
                       config.Type == "Warning" and Color3.fromRGB(255, 200, 80) or
@@ -758,7 +702,7 @@ function Window:Notify(config)
 end
 
 -- ======================================================
--- WINDOW:AddTab
+-- TAB SYSTEM
 -- ======================================================
 function Window:AddTab(config)
     config = config or {}
@@ -776,7 +720,6 @@ function Window:AddTab(config)
     corner(btn, 8)
     stroke(btn, self.Theme.Accent, 1, (#self.Tabs == 0) and 0.3 or 1)
     
-    -- Icon + Text
     local icon = Instance.new("ImageLabel")
     icon.Size = UDim2.new(0, 16, 0, 16)
     icon.Position = UDim2.new(0, 8, 0.5, -8)
@@ -795,20 +738,20 @@ function Window:AddTab(config)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = btn
     
-    -- Auto size
     btn.Size = UDim2.new(0, label.TextBounds.X + 46, 0, 34)
     
-    -- Page
+    -- PAGE - NƠI CHỨA COMPONENTS
     local page = Instance.new("ScrollingFrame")
     page.Size = UDim2.new(1, 0, 1, 0)
     page.BackgroundTransparency = 1
     page.BorderSizePixel = 0
-    page.ScrollBarThickness = 3
+    page.ScrollBarThickness = 4
     page.ScrollBarImageColor3 = self.Theme.Accent
     page.CanvasSize = UDim2.new(0, 0, 0, 0)
     page.Visible = (#self.Tabs == 0)
     page.Parent = self.ContentArea
     
+    -- LAYOUT CHO COMPONENTS
     local layout = Instance.new("UIListLayout")
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     layout.Padding = UDim.new(0, 6)
@@ -821,11 +764,12 @@ function Window:AddTab(config)
     pad.PaddingBottom = UDim.new(0, 10)
     pad.Parent = page
     
+    -- UPDATE CANVAS
     local function updateCanvas()
         page.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
     end
     layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
-    updateCanvas()
+    task.delay(0.1, updateCanvas)
     
     local tabObj = {
         Title = config.Title,
@@ -840,6 +784,7 @@ function Window:AddTab(config)
     
     if #self.Tabs == 1 then
         self.ActiveTab = tabObj
+        page.Visible = true
     end
     
     btn.MouseButton1Click:Connect(function()
@@ -868,10 +813,10 @@ function Window:_SelectTab(tabObj)
         tab.Page.Visible = active
         tab.Label.TextColor3 = active and self.Theme.Text or Color3.fromRGB(150, 150, 180)
         tween(tab.Button, {BackgroundTransparency = active and 0.85 or 1}, 0.2)
-        local btnStroke = tab.Button:FindFirstChild("UIStroke")
-        if btnStroke then
-            btnStroke.Transparency = active and 0.3 or 1
-            btnStroke.Color = self.Theme.Accent
+        local s = tab.Button:FindFirstChild("UIStroke")
+        if s then
+            s.Transparency = active and 0.3 or 1
+            s.Color = self.Theme.Accent
         end
     end
     self.ActiveTab = tabObj
@@ -887,6 +832,7 @@ function Window:GetTabObject(tab)
     local obj = setmetatable({}, TabComponent)
     obj.Window = self
     obj.Page = tab.Page
+    obj.Layout = tab.Layout
     return obj
 end
 
