@@ -1,6 +1,6 @@
 --[[
-    FloatingGUI.lua  —  Bản nâng cấp (v3): Hỗ trợ theme đa màu, cải thiện UI components
-    Mặc định: KHÔNG có hiệu ứng màu (ColorMode = "none")
+    FloatingGUI.lua  —  Bản nâng cấp (v3): Hỗ trợ theme đa màu, gradient 2 màu
+    THEME RUBY: Gradient hồng nhạt (trên) → xanh nước nhạt (dưới)
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -19,168 +19,211 @@ local Themes = {
         Accent = Color3.fromRGB(100, 150, 255),
         Text = Color3.fromRGB(235, 235, 240),
         Secondary = Color3.fromRGB(45, 45, 55),
-        Border = Color3.fromRGB(60, 60, 75)
+        Border = Color3.fromRGB(60, 60, 75),
+        GradientTop = Color3.fromRGB(26, 26, 34),
+        GradientBottom = Color3.fromRGB(26, 26, 34)
     },
     Red = {
         Background = Color3.fromRGB(30, 20, 20),
         Accent = Color3.fromRGB(255, 80, 80),
         Text = Color3.fromRGB(235, 235, 240),
         Secondary = Color3.fromRGB(50, 30, 30),
-        Border = Color3.fromRGB(80, 40, 40)
+        Border = Color3.fromRGB(80, 40, 40),
+        GradientTop = Color3.fromRGB(30, 20, 20),
+        GradientBottom = Color3.fromRGB(30, 20, 20)
     },
     Green = {
         Background = Color3.fromRGB(20, 30, 20),
         Accent = Color3.fromRGB(80, 255, 120),
         Text = Color3.fromRGB(235, 235, 240),
         Secondary = Color3.fromRGB(30, 50, 30),
-        Border = Color3.fromRGB(40, 80, 40)
+        Border = Color3.fromRGB(40, 80, 40),
+        GradientTop = Color3.fromRGB(20, 30, 20),
+        GradientBottom = Color3.fromRGB(20, 30, 20)
     },
     Blue = {
         Background = Color3.fromRGB(20, 25, 40),
         Accent = Color3.fromRGB(80, 180, 255),
         Text = Color3.fromRGB(235, 235, 240),
         Secondary = Color3.fromRGB(30, 40, 60),
-        Border = Color3.fromRGB(40, 60, 90)
+        Border = Color3.fromRGB(40, 60, 90),
+        GradientTop = Color3.fromRGB(20, 25, 40),
+        GradientBottom = Color3.fromRGB(20, 25, 40)
     },
     Purple = {
         Background = Color3.fromRGB(25, 20, 40),
         Accent = Color3.fromRGB(180, 100, 255),
         Text = Color3.fromRGB(235, 235, 240),
         Secondary = Color3.fromRGB(40, 30, 60),
-        Border = Color3.fromRGB(60, 40, 90)
+        Border = Color3.fromRGB(60, 40, 90),
+        GradientTop = Color3.fromRGB(25, 20, 40),
+        GradientBottom = Color3.fromRGB(25, 20, 40)
     },
     Pink = {
         Background = Color3.fromRGB(35, 20, 30),
         Accent = Color3.fromRGB(255, 120, 180),
         Text = Color3.fromRGB(235, 235, 240),
         Secondary = Color3.fromRGB(55, 30, 45),
-        Border = Color3.fromRGB(80, 40, 60)
+        Border = Color3.fromRGB(80, 40, 60),
+        GradientTop = Color3.fromRGB(35, 20, 30),
+        GradientBottom = Color3.fromRGB(35, 20, 30)
     },
     Orange = {
         Background = Color3.fromRGB(35, 25, 20),
         Accent = Color3.fromRGB(255, 150, 80),
         Text = Color3.fromRGB(235, 235, 240),
         Secondary = Color3.fromRGB(55, 40, 30),
-        Border = Color3.fromRGB(80, 60, 40)
+        Border = Color3.fromRGB(80, 60, 40),
+        GradientTop = Color3.fromRGB(35, 25, 20),
+        GradientBottom = Color3.fromRGB(35, 25, 20)
     },
     Yellow = {
         Background = Color3.fromRGB(35, 35, 20),
         Accent = Color3.fromRGB(255, 220, 80),
         Text = Color3.fromRGB(235, 235, 240),
         Secondary = Color3.fromRGB(55, 55, 30),
-        Border = Color3.fromRGB(80, 80, 40)
+        Border = Color3.fromRGB(80, 80, 40),
+        GradientTop = Color3.fromRGB(35, 35, 20),
+        GradientBottom = Color3.fromRGB(35, 35, 20)
     },
     Cyan = {
         Background = Color3.fromRGB(20, 35, 35),
         Accent = Color3.fromRGB(80, 220, 255),
         Text = Color3.fromRGB(235, 235, 240),
         Secondary = Color3.fromRGB(30, 55, 55),
-        Border = Color3.fromRGB(40, 80, 80)
+        Border = Color3.fromRGB(40, 80, 80),
+        GradientTop = Color3.fromRGB(20, 35, 35),
+        GradientBottom = Color3.fromRGB(20, 35, 35)
     },
     Magenta = {
         Background = Color3.fromRGB(35, 20, 35),
         Accent = Color3.fromRGB(255, 80, 200),
         Text = Color3.fromRGB(235, 235, 240),
         Secondary = Color3.fromRGB(55, 30, 55),
-        Border = Color3.fromRGB(80, 40, 80)
+        Border = Color3.fromRGB(80, 40, 80),
+        GradientTop = Color3.fromRGB(35, 20, 35),
+        GradientBottom = Color3.fromRGB(35, 20, 35)
     },
     Ocean = {
         Background = Color3.fromRGB(15, 25, 45),
         Accent = Color3.fromRGB(100, 200, 255),
         Text = Color3.fromRGB(235, 240, 250),
         Secondary = Color3.fromRGB(25, 40, 65),
-        Border = Color3.fromRGB(40, 70, 100)
+        Border = Color3.fromRGB(40, 70, 100),
+        GradientTop = Color3.fromRGB(15, 25, 45),
+        GradientBottom = Color3.fromRGB(15, 25, 45)
     },
     Sunset = {
         Background = Color3.fromRGB(40, 20, 25),
         Accent = Color3.fromRGB(255, 150, 100),
         Text = Color3.fromRGB(250, 240, 235),
         Secondary = Color3.fromRGB(60, 30, 35),
-        Border = Color3.fromRGB(90, 50, 45)
+        Border = Color3.fromRGB(90, 50, 45),
+        GradientTop = Color3.fromRGB(40, 20, 25),
+        GradientBottom = Color3.fromRGB(40, 20, 25)
     },
     Neon = {
         Background = Color3.fromRGB(20, 20, 30),
         Accent = Color3.fromRGB(0, 255, 200),
         Text = Color3.fromRGB(200, 255, 240),
         Secondary = Color3.fromRGB(30, 30, 45),
-        Border = Color3.fromRGB(0, 80, 70)
+        Border = Color3.fromRGB(0, 80, 70),
+        GradientTop = Color3.fromRGB(20, 20, 30),
+        GradientBottom = Color3.fromRGB(20, 20, 30)
     },
-    Royal = {
-        Background = Color3.fromRGB(25, 20, 35),
-        Accent = Color3.fromRGB(200, 150, 255),
-        Text = Color3.fromRGB(240, 235, 250),
-        Secondary = Color3.fromRGB(40, 30, 55),
-        Border = Color3.fromRGB(70, 50, 100)
-    },
-    Forest = {
-        Background = Color3.fromRGB(20, 30, 22),
-        Accent = Color3.fromRGB(120, 255, 150),
-        Text = Color3.fromRGB(230, 245, 235),
-        Secondary = Color3.fromRGB(30, 45, 32),
-        Border = Color3.fromRGB(50, 85, 55)
-    },
-    Lavender = {
-        Background = Color3.fromRGB(30, 25, 40),
-        Accent = Color3.fromRGB(200, 180, 255),
-        Text = Color3.fromRGB(245, 240, 255),
-        Secondary = Color3.fromRGB(45, 38, 58),
-        Border = Color3.fromRGB(80, 65, 110)
-    },
-    Mint = {
-        Background = Color3.fromRGB(22, 35, 30),
-        Accent = Color3.fromRGB(150, 255, 220),
-        Text = Color3.fromRGB(235, 250, 245),
-        Secondary = Color3.fromRGB(32, 50, 42),
-        Border = Color3.fromRGB(55, 90, 75)
-    },
-    Coral = {
-        Background = Color3.fromRGB(40, 22, 25),
-        Accent = Color3.fromRGB(255, 150, 150),
-        Text = Color3.fromRGB(250, 240, 240),
-        Secondary = Color3.fromRGB(60, 32, 35),
-        Border = Color3.fromRGB(90, 50, 50)
-    },
-    Sky = {
-        Background = Color3.fromRGB(18, 28, 45),
-        Accent = Color3.fromRGB(135, 206, 255),
-        Text = Color3.fromRGB(235, 245, 255),
-        Secondary = Color3.fromRGB(28, 42, 65),
-        Border = Color3.fromRGB(45, 75, 110)
-    },
-    Rose = {
-        Background = Color3.fromRGB(35, 22, 28),
-        Accent = Color3.fromRGB(255, 130, 170),
-        Text = Color3.fromRGB(250, 240, 245),
-        Secondary = Color3.fromRGB(55, 32, 40),
-        Border = Color3.fromRGB(90, 45, 65)
-    },
-    Emerald = {
-        Background = Color3.fromRGB(18, 32, 22),
-        Accent = Color3.fromRGB(80, 220, 140),
-        Text = Color3.fromRGB(235, 250, 240),
-        Secondary = Color3.fromRGB(28, 48, 32),
-        Border = Color3.fromRGB(45, 85, 55)
-    },
+    
+    -- ======================================================
+    -- THEME RUBY: HỒNG NHẠT TRÊN → XANH NƯỚC NHẠT DƯỚI
+    -- ======================================================
     Ruby = {
-        Background = Color3.fromRGB(35, 18, 18),
-        Accent = Color3.fromRGB(220, 60, 80),
-        Text = Color3.fromRGB(250, 235, 235),
-        Secondary = Color3.fromRGB(55, 28, 28),
-        Border = Color3.fromRGB(90, 40, 40)
+        Background = Color3.fromRGB(45, 22, 35),
+        Accent = Color3.fromRGB(255, 180, 220),
+        Text = Color3.fromRGB(255, 255, 255),
+        Secondary = Color3.fromRGB(35, 25, 45),
+        Border = Color3.fromRGB(180, 200, 255),
+        GradientTop = Color3.fromRGB(255, 150, 200),    -- Hồng nhạt
+        GradientBottom = Color3.fromRGB(150, 220, 255)  -- Xanh nước nhạt
     },
-    Sapphire = {
-        Background = Color3.fromRGB(18, 22, 40),
-        Accent = Color3.fromRGB(100, 150, 255),
-        Text = Color3.fromRGB(235, 240, 255),
-        Secondary = Color3.fromRGB(28, 35, 60),
-        Border = Color3.fromRGB(45, 60, 100)
+    
+    -- RubyDark: Phiên bản tối hơn
+    RubyDark = {
+        Background = Color3.fromRGB(30, 18, 25),
+        Accent = Color3.fromRGB(255, 160, 210),
+        Text = Color3.fromRGB(240, 240, 245),
+        Secondary = Color3.fromRGB(25, 20, 35),
+        Border = Color3.fromRGB(150, 180, 220),
+        GradientTop = Color3.fromRGB(200, 100, 150),
+        GradientBottom = Color3.fromRGB(100, 180, 220)
     },
-    Amber = {
-        Background = Color3.fromRGB(35, 28, 18),
-        Accent = Color3.fromRGB(255, 190, 80),
-        Text = Color3.fromRGB(250, 245, 235),
-        Secondary = Color3.fromRGB(55, 42, 28),
-        Border = Color3.fromRGB(90, 70, 40)
+    
+    -- RubyLight: Phiên bản sáng hơn
+    RubyLight = {
+        Background = Color3.fromRGB(60, 35, 50),
+        Accent = Color3.fromRGB(255, 200, 230),
+        Text = Color3.fromRGB(255, 255, 255),
+        Secondary = Color3.fromRGB(45, 30, 55),
+        Border = Color3.fromRGB(200, 220, 255),
+        GradientTop = Color3.fromRGB(255, 180, 220),
+        GradientBottom = Color3.fromRGB(180, 230, 255)
+    },
+    
+    -- ======================================================
+    -- THÊM CÁC THEME GRADIENT KHÁC
+    -- ======================================================
+    
+    -- Tím → Hồng
+    PurplePink = {
+        Background = Color3.fromRGB(35, 20, 45),
+        Accent = Color3.fromRGB(200, 150, 255),
+        Text = Color3.fromRGB(255, 240, 255),
+        Secondary = Color3.fromRGB(50, 25, 40),
+        Border = Color3.fromRGB(255, 120, 180),
+        GradientTop = Color3.fromRGB(180, 100, 255),
+        GradientBottom = Color3.fromRGB(255, 120, 180)
+    },
+    
+    -- Cam → Vàng
+    OrangeYellow = {
+        Background = Color3.fromRGB(40, 30, 18),
+        Accent = Color3.fromRGB(255, 180, 80),
+        Text = Color3.fromRGB(255, 245, 235),
+        Secondary = Color3.fromRGB(55, 40, 25),
+        Border = Color3.fromRGB(255, 220, 150),
+        GradientTop = Color3.fromRGB(255, 150, 80),
+        GradientBottom = Color3.fromRGB(255, 220, 80)
+    },
+    
+    -- Xanh biển → Xanh lá
+    BlueGreen = {
+        Background = Color3.fromRGB(18, 30, 35),
+        Accent = Color3.fromRGB(80, 220, 200),
+        Text = Color3.fromRGB(235, 255, 245),
+        Secondary = Color3.fromRGB(25, 40, 45),
+        Border = Color3.fromRGB(150, 255, 200),
+        GradientTop = Color3.fromRGB(80, 180, 255),
+        GradientBottom = Color3.fromRGB(80, 255, 150)
+    },
+    
+    -- Hồng → Xanh biển
+    PinkBlue = {
+        Background = Color3.fromRGB(45, 20, 40),
+        Accent = Color3.fromRGB(255, 150, 200),
+        Text = Color3.fromRGB(240, 240, 255),
+        Secondary = Color3.fromRGB(25, 40, 70),
+        Border = Color3.fromRGB(100, 150, 255),
+        GradientTop = Color3.fromRGB(255, 150, 200),
+        GradientBottom = Color3.fromRGB(100, 150, 255)
+    },
+    
+    -- Xanh lá → Vàng
+    GreenGold = {
+        Background = Color3.fromRGB(20, 35, 22),
+        Accent = Color3.fromRGB(120, 255, 150),
+        Text = Color3.fromRGB(240, 255, 240),
+        Secondary = Color3.fromRGB(40, 35, 20),
+        Border = Color3.fromRGB(255, 200, 80),
+        GradientTop = Color3.fromRGB(120, 255, 150),
+        GradientBottom = Color3.fromRGB(255, 200, 80)
     }
 }
 
@@ -209,6 +252,24 @@ local function stroke(obj, color, thickness, transparency)
     s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     s.Parent = obj
     return s
+end
+
+-- Tạo gradient cho frame (từ trên xuống dưới)
+local function applyGradient(obj, topColor, bottomColor, rotation)
+    -- Xóa gradient cũ nếu có
+    local oldGrad = obj:FindFirstChild("UIGradient")
+    if oldGrad then
+        oldGrad:Destroy()
+    end
+    
+    local grad = Instance.new("UIGradient")
+    grad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, topColor or Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(1, bottomColor or Color3.fromRGB(255, 255, 255))
+    })
+    grad.Rotation = rotation or 90 -- 90 = từ trên xuống dưới
+    grad.Parent = obj
+    return grad
 end
 
 local function glassSheen(obj, brightness)
@@ -272,7 +333,6 @@ function RainbowEffect.new(window, mode)
     self.CurrentIndex = 1
     self.Timer = nil
     
-    -- Tạo 7 màu random
     for i = 1, 7 do
         table.insert(self.RandomColors, Color3.fromHSV(math.random(), 1, 1))
     end
@@ -361,6 +421,8 @@ function GUILib.new(config)
     self.TextColor = theme.Text
     self.SecondaryColor = theme.Secondary
     self.BorderColor = theme.Border
+    self.GradientTop = theme.GradientTop or theme.Background
+    self.GradientBottom = theme.GradientBottom or theme.Background
 
     -- Cấu hình cơ bản
     self.Title = config.Title or "Floating GUI"
@@ -370,7 +432,6 @@ function GUILib.new(config)
     self.GlassTransparency = config.Transparency or 0.16
     self.ToggleKey = config.ToggleKey or Enum.KeyCode.RightShift
     
-    -- Đọc ColorMode từ config (mặc định "none")
     self.ColorMode = config.ColorMode or "none"
     self.RainbowEffect = nil
 
@@ -379,7 +440,6 @@ function GUILib.new(config)
 
     self:_Build()
     
-    -- Tự động bật hiệu ứng nếu config yêu cầu
     if self.ColorMode ~= "none" then
         task.spawn(function()
             task.wait(0.1)
@@ -394,12 +454,10 @@ end
 -- API COLOR EFFECT
 --======================================================
 function GUILib:StartColorEffect(mode)
-    -- Dừng hiệu ứng cũ nếu có
     if self.RainbowEffect then
         self.RainbowEffect:Stop()
     end
     
-    -- Tạo hiệu ứng mới
     self.RainbowEffect = RainbowEffect.new(self, mode or "rainbow")
     self.RainbowEffect:Start()
     self.ColorMode = mode or "rainbow"
@@ -472,12 +530,15 @@ function GUILib:_Build()
     main.Size = UDim2.new(0, self.Width, 0, self.Height)
     main.Position = UDim2.new(0.5, -self.Width / 2, 0.5, -self.Height / 2)
     main.BackgroundColor3 = self.ThemeColor
-    main.BackgroundTransparency = T
+    main.BackgroundTransparency = 0.85
     main.BorderSizePixel = 0
     main.ClipsDescendants = true
     main.Parent = screenGui
     corner(main, 14)
     stroke(main, theme.Border, 1, 0.7)
+    
+    -- Áp dụng gradient cho Main Frame
+    applyGradient(main, self.GradientTop, self.GradientBottom, 90)
     self.MainFrame = main
 
     -- Sync overlays
@@ -497,10 +558,13 @@ function GUILib:_Build()
     titleBar.Name = "TitleBar"
     titleBar.Size = UDim2.new(1, 0, 0, 38)
     titleBar.BackgroundColor3 = self.ThemeColor
-    titleBar.BackgroundTransparency = math.clamp(T + 0.1, 0, 0.95)
+    titleBar.BackgroundTransparency = 0.85
     titleBar.BorderSizePixel = 0
     titleBar.Parent = main
     corner(titleBar, 14)
+    
+    -- Áp dụng gradient cho Title Bar
+    applyGradient(titleBar, self.GradientTop, self.GradientBottom, 90)
     glassSheen(titleBar, 0.05)
     self.TitleBar = titleBar
 
@@ -509,10 +573,13 @@ function GUILib:_Build()
     titleFix.Size = UDim2.new(1, 0, 0, 14)
     titleFix.Position = UDim2.new(0, 0, 1, -14)
     titleFix.BackgroundColor3 = self.ThemeColor
-    titleFix.BackgroundTransparency = titleBar.BackgroundTransparency
+    titleFix.BackgroundTransparency = 0.85
     titleFix.BorderSizePixel = 0
     titleFix.ZIndex = titleBar.ZIndex
     titleFix.Parent = titleBar
+    
+    -- Áp dụng gradient cho Title Fix
+    applyGradient(titleFix, self.GradientTop, self.GradientBottom, 90)
 
     local dot = Instance.new("Frame")
     dot.BackgroundColor3 = self.AccentColor
@@ -602,10 +669,13 @@ function GUILib:_Build()
     tabContainer.Size = UDim2.new(0, 104, 1, -38)
     tabContainer.Position = UDim2.new(0, 0, 0, 38)
     tabContainer.BackgroundColor3 = self.SecondaryColor
-    tabContainer.BackgroundTransparency = math.clamp(T + 0.05, 0, 0.95)
+    tabContainer.BackgroundTransparency = 0.88
     tabContainer.BorderSizePixel = 0
     tabContainer.ClipsDescendants = true
     tabContainer.Parent = main
+    
+    -- Áp dụng gradient cho Tab Container
+    applyGradient(tabContainer, self.GradientTop, self.GradientBottom, 90)
     self.TabContainer = tabContainer
 
     -- Tab Bar Line
@@ -650,9 +720,12 @@ function GUILib:_Build()
     content.Size = UDim2.new(1, -104, 1, -38)
     content.Position = UDim2.new(0, 104, 0, 38)
     content.BackgroundColor3 = self.ThemeColor
-    content.BackgroundTransparency = T
+    content.BackgroundTransparency = 0.85
     content.BorderSizePixel = 0
     content.Parent = main
+    
+    -- Áp dụng gradient cho Content Area
+    applyGradient(content, self.GradientTop, self.GradientBottom, 90)
     self.ContentArea = content
 
     -- Resize Handle
@@ -719,7 +792,7 @@ function GUILib:_Build()
     glow.ImageTransparency = 1
     tween(main, {
         Size = UDim2.new(0, self.Width, 0, self.Height),
-        BackgroundTransparency = T,
+        BackgroundTransparency = 0.85,
     }, 0.22, Enum.EasingStyle.Back)
     tween(shadow, {ImageTransparency = 0.35}, 0.3)
     tween(glow, {ImageTransparency = 0.82}, 0.3)
@@ -729,10 +802,6 @@ end
 -- API
 --======================================================
 function GUILib:SetTheme(themeName)
-    self:ApplyTheme(themeName)
-end
-
-function GUILib:ApplyTheme(themeName)
     local theme = Themes[themeName]
     if not theme then return end
     
@@ -742,35 +811,42 @@ function GUILib:ApplyTheme(themeName)
     self.TextColor = theme.Text
     self.SecondaryColor = theme.Secondary
     self.BorderColor = theme.Border
+    self.GradientTop = theme.GradientTop or theme.Background
+    self.GradientBottom = theme.GradientBottom or theme.Background
     
-    self:SetThemeColor(theme.Background)
-    self:SetAccentColor(self.AccentColor)
+    self:UpdateGradient()
     self:UpdateUIComponents()
 end
 
-function GUILib:UpdateUIComponents()
-    for _, tab in ipairs(self.Tabs) do
-        if tab.Page then
-            for _, child in ipairs(tab.Page:GetChildren()) do
-                if child:IsA("Frame") and child.BackgroundTransparency < 1 then
-                    child.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                end
-            end
+function GUILib:UpdateGradient()
+    -- Cập nhật gradient cho tất cả các frame
+    local frames = {
+        self.MainFrame,
+        self.TitleBar,
+        self.ContentArea,
+        self.TabContainer
+    }
+    
+    for _, frame in ipairs(frames) do
+        if frame then
+            applyGradient(frame, self.GradientTop, self.GradientBottom, 90)
+            frame.BackgroundTransparency = 0.85
         end
+    end
+    
+    -- Cập nhật TitleFix
+    local titleFix = self.TitleBar:FindFirstChild("TitleFix")
+    if titleFix then
+        applyGradient(titleFix, self.GradientTop, self.GradientBottom, 90)
+        titleFix.BackgroundTransparency = 0.85
     end
 end
 
 function GUILib:SetThemeColor(color)
     self.ThemeColor = color
-
     tween(self.MainFrame, {BackgroundColor3 = color}, 0.2)
     tween(self.TitleBar, {BackgroundColor3 = color}, 0.2)
     tween(self.ContentArea, {BackgroundColor3 = color}, 0.2)
-
-    local titleFix = self.TitleBar:FindFirstChild("TitleFix")
-    if titleFix then
-        tween(titleFix, {BackgroundColor3 = color}, 0.2)
-    end
 end
 
 function GUILib:SetAccentColor(color)
@@ -809,7 +885,7 @@ function GUILib:Toggle(visible)
     if visible then
         self.ScreenGui.Enabled = true
         self.MainFrame.BackgroundTransparency = 1
-        tween(self.MainFrame, {BackgroundTransparency = self.GlassTransparency}, 0.15)
+        tween(self.MainFrame, {BackgroundTransparency = 0.85}, 0.15)
     else
         tween(self.MainFrame, {BackgroundTransparency = 1}, 0.12)
         task.delay(0.12, function()
@@ -859,7 +935,11 @@ function GUILib:Notify(title, name, duration)
     notif.ClipsDescendants = true
     notif.Parent = self.ScreenGui
     corner(notif, 10)
-    stroke(notif, self.ThemeColors.Border, 1, 0.7)
+    stroke(notif, self.BorderColor, 1, 0.7)
+    
+    -- Gradient cho notification
+    applyGradient(notif, self.GradientTop, self.GradientBottom, 90)
+    notif.BackgroundTransparency = 0.85
 
     local bar = Instance.new("Frame")
     bar.BackgroundColor3 = self.AccentColor
