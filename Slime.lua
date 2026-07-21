@@ -1,11 +1,5 @@
 --[[
     SlimeUI.lua - UI Hoàn Chỉnh, Không Lỗi
-    Cách dùng:
-    local Library = require(script.Parent.SlimeUI)
-    local Window = Library:CreateWindow({Title = "My Hub"})
-    local Tab = Window:AddTab({Title = "Main"})
-    local Section = Tab:AddSection("Category")
-    Section:AddButton({Text = "Click", Callback = function() end})
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -61,27 +55,24 @@ local function createParticles(position, color)
 end
 
 -- ======================================================
--- LIBRARY
+-- WINDOW CLASS
 -- ======================================================
-local Library = {}
+local Window = {}
+Window.__index = Window
 
--- ======================================================
--- WINDOW
--- ======================================================
-function Library:CreateWindow(config)
+function Window.new(config)
     config = config or {}
     
-    local self = {
-        Title = config.Title or "Slime Hub",
-        Width = config.Width or 520,
-        Height = config.Height or 400,
-        Tabs = {},
-        ActiveTab = nil,
-        IsMinimized = false,
-        IsMaximized = false,
-        NormalWidth = config.Width or 520,
-        NormalHeight = config.Height or 400,
-    }
+    local self = setmetatable({}, Window)
+    self.Title = config.Title or "Slime Hub"
+    self.Width = config.Width or 520
+    self.Height = config.Height or 400
+    self.Tabs = {}
+    self.ActiveTab = nil
+    self.IsMinimized = false
+    self.IsMaximized = false
+    self.NormalWidth = self.Width
+    self.NormalHeight = self.Height
     
     -- ScreenGui
     local screenGui = Instance.new("ScreenGui")
@@ -129,9 +120,7 @@ function Library:CreateWindow(config)
     grad.Rotation = 45
     grad.Parent = bg
     
-    -- ==================================================
-    -- TITLE BAR
-    -- ==================================================
+    -- Title Bar
     local titleBar = Instance.new("Frame")
     titleBar.Name = "TitleBar"
     titleBar.Size = UDim2.new(1, 0, 0, 44)
@@ -142,7 +131,7 @@ function Library:CreateWindow(config)
     corner(titleBar, 14)
     self.TitleBar = titleBar
     
-    -- Title
+    -- Title Text
     local titleText = Instance.new("TextLabel")
     titleText.BackgroundTransparency = 1
     titleText.Position = UDim2.new(0, 14, 0, 0)
@@ -155,7 +144,7 @@ function Library:CreateWindow(config)
     titleText.Parent = titleBar
     self.TitleText = titleText
     
-    -- Control Buttons Container
+    -- Control Buttons
     local controls = Instance.new("Frame")
     controls.Size = UDim2.new(0, 100, 1, 0)
     controls.Position = UDim2.new(1, -108, 0, 0)
@@ -242,9 +231,7 @@ function Library:CreateWindow(config)
         self:Destroy()
     end)
     
-    -- ==================================================
-    -- TAB BAR
-    -- ==================================================
+    -- Tab Bar
     local tabBar = Instance.new("ScrollingFrame")
     tabBar.Name = "TabBar"
     tabBar.Position = UDim2.new(0, 0, 0, 44)
@@ -272,16 +259,13 @@ function Library:CreateWindow(config)
     tabPad.PaddingBottom = UDim.new(0, 4)
     tabPad.Parent = tabBar
     
-    -- Update canvas size
     local function updateTabCanvas()
         tabBar.CanvasSize = UDim2.new(0, tabLayout.AbsoluteContentSize.X + 16, 0, 0)
     end
     tabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
     updateTabCanvas()
     
-    -- ==================================================
-    -- CONTENT AREA
-    -- ==================================================
+    -- Content Area
     local content = Instance.new("Frame")
     content.Name = "ContentArea"
     content.Position = UDim2.new(0, 0, 0, 84)
@@ -290,9 +274,7 @@ function Library:CreateWindow(config)
     content.Parent = main
     self.ContentArea = content
     
-    -- ==================================================
-    -- DRAG WINDOW
-    -- ==================================================
+    -- Drag Window
     local dragging = false
     local dragStart, startPos
     
@@ -320,9 +302,7 @@ function Library:CreateWindow(config)
         end
     end)
     
-    -- ==================================================
-    -- RESIZE HANDLE
-    -- ==================================================
+    -- Resize Handle
     local resizeHandle = Instance.new("Frame")
     resizeHandle.Name = "ResizeHandle"
     resizeHandle.Size = UDim2.new(0, 16, 0, 16)
@@ -339,7 +319,6 @@ function Library:CreateWindow(config)
             resizeData.active = true
             resizeData.startPos = input.Position
             resizeData.startSize = main.Size
-            resizeData.startPos2 = main.Position
         end
     end)
     resizeHandle.InputEnded:Connect(function()
@@ -360,25 +339,7 @@ function Library:CreateWindow(config)
         end
     end)
     
-    -- ==================================================
-    -- TOGGLE SIDEBAR (nút mở tab)
-    -- ==================================================
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(0, 30, 0, 30)
-    toggleBtn.Position = UDim2.new(0, 8, 0, 48)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(80, 140, 255)
-    toggleBtn.BackgroundTransparency = 0.7
-    toggleBtn.Text = "☰"
-    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.TextSize = 14
-    toggleBtn.Font = Enum.Font.GothamBold
-    toggleBtn.AutoButtonColor = false
-    toggleBtn.Parent = main
-    corner(toggleBtn, 6)
-    
-    -- ==================================================
-    -- KEYBINDS
-    -- ==================================================
+    -- Keybinds
     UserInputService.InputBegan:Connect(function(input, processed)
         if not processed then
             if input.KeyCode == Enum.KeyCode.RightShift then
@@ -387,9 +348,7 @@ function Library:CreateWindow(config)
         end
     end)
     
-    -- ==================================================
-    -- NOTIFICATION SYSTEM
-    -- ==================================================
+    -- Notification System
     function self:Notify(config)
         config = config or {}
         local notif = Instance.new("Frame")
@@ -458,11 +417,15 @@ function Window:ToggleMinimize()
     self.IsMinimized = not self.IsMinimized
     if self.IsMinimized then
         tween(self.Main, {Size = UDim2.new(0, self.Width, 0, 44)}, 0.25)
-        self.MinBtn.Text = "▢"
+        if self.MinBtn then
+            self.MinBtn.Text = "▢"
+        end
     else
         local h = self.IsMaximized and 600 or self.Height
         tween(self.Main, {Size = UDim2.new(0, self.Width, 0, h)}, 0.25)
-        self.MinBtn.Text = "─"
+        if self.MinBtn then
+            self.MinBtn.Text = "─"
+        end
     end
 end
 
@@ -477,7 +440,9 @@ function Window:ToggleMaximize()
             Size = UDim2.new(0, 800, 0, 600),
             Position = UDim2.new(0.5, -400, 0.5, -300)
         }, 0.25)
-        self.MaxBtn.Text = "❐"
+        if self.MaxBtn then
+            self.MaxBtn.Text = "❐"
+        end
     else
         self.Width = self.NormalWidth
         self.Height = self.NormalHeight
@@ -485,16 +450,22 @@ function Window:ToggleMaximize()
             Size = UDim2.new(0, self.NormalWidth, 0, self.NormalHeight),
             Position = UDim2.new(0.5, -self.NormalWidth/2, 0.5, -self.NormalHeight/2)
         }, 0.25)
-        self.MaxBtn.Text = "□"
+        if self.MaxBtn then
+            self.MaxBtn.Text = "□"
+        end
     end
 end
 
 function Window:ToggleVisible(visible)
-    self.ScreenGui.Enabled = visible
+    if self.ScreenGui then
+        self.ScreenGui.Enabled = visible
+    end
 end
 
 function Window:Destroy()
-    self.ScreenGui:Destroy()
+    if self.ScreenGui then
+        self.ScreenGui:Destroy()
+    end
 end
 
 -- ======================================================
@@ -503,7 +474,6 @@ end
 function Window:AddTab(config)
     config = config or {}
     
-    -- Tab Button
     local tabBtn = Instance.new("TextButton")
     tabBtn.Name = config.Title .. "Tab"
     tabBtn.Size = UDim2.new(0, 100, 1, -8)
@@ -518,7 +488,6 @@ function Window:AddTab(config)
     tabBtn.Parent = self.TabBar
     corner(tabBtn, 6)
     
-    -- Indicator
     local indicator = Instance.new("Frame")
     indicator.Size = UDim2.new(0, 24, 0, 3)
     indicator.Position = UDim2.new(0.5, -12, 1, -4)
@@ -528,7 +497,6 @@ function Window:AddTab(config)
     indicator.Parent = tabBtn
     corner(indicator, 2)
     
-    -- Content Page
     local page = Instance.new("ScrollingFrame")
     page.Name = config.Title .. "Page"
     page.Size = UDim2.new(1, 0, 1, 0)
@@ -573,12 +541,10 @@ function Window:AddTab(config)
         self.ActiveTab = tabObj
     end
     
-    -- Click handler
     tabBtn.MouseButton1Click:Connect(function()
         self:_SelectTab(tabObj)
     end)
     
-    -- Hover effects
     tabBtn.MouseEnter:Connect(function()
         if self.ActiveTab ~= tabObj then
             tween(tabBtn, {BackgroundTransparency = 0.7}, 0.1)
@@ -614,8 +580,17 @@ function Window:_SelectTab(tabObj)
 end
 
 -- ======================================================
--- TAB:AddSection
+-- TAB CLASS
 -- ======================================================
+local Tab = {}
+Tab.__index = Tab
+
+function Tab.new(window)
+    local self = setmetatable({}, Tab)
+    self.Window = window
+    return self
+end
+
 function Tab:AddSection(name)
     local win = self.Window
     
@@ -629,7 +604,6 @@ function Tab:AddSection(name)
     section.Parent = self.Page
     corner(section, 10)
     
-    -- Section header
     local header = Instance.new("TextLabel")
     header.BackgroundTransparency = 1
     header.Position = UDim2.new(0, 14, 0, 8)
@@ -641,7 +615,6 @@ function Tab:AddSection(name)
     header.TextXAlignment = Enum.TextXAlignment.Left
     header.Parent = section
     
-    -- Body
     local body = Instance.new("Frame")
     body.BackgroundTransparency = 1
     body.Position = UDim2.new(0, 10, 0, 36)
@@ -658,16 +631,22 @@ function Tab:AddSection(name)
     pad.PaddingBottom = UDim.new(0, 10)
     pad.Parent = section
     
-    return {
+    local sectionObj = {
         Window = win,
         Body = body,
         Section = section,
     }
+    
+    setmetatable(sectionObj, Section)
+    return sectionObj
 end
 
 -- ======================================================
--- SECTION:AddButton
+-- SECTION CLASS
 -- ======================================================
+local Section = {}
+Section.__index = Section
+
 function Section:AddButton(config)
     config = config or {}
     local win = self.Window
@@ -685,7 +664,6 @@ function Section:AddButton(config)
     btn.Parent = self.Body
     corner(btn, 8)
     
-    -- Hover glow
     local glow = Instance.new("Frame")
     glow.Size = UDim2.new(0, 60, 1, 0)
     glow.Position = UDim2.new(0, -30, 0, 0)
@@ -710,9 +688,6 @@ function Section:AddButton(config)
     return btn
 end
 
--- ======================================================
--- SECTION:AddToggle
--- ======================================================
 function Section:AddToggle(config)
     config = config or {}
     local win = self.Window
@@ -761,8 +736,6 @@ function Section:AddToggle(config)
     
     switch.MouseButton1Click:Connect(function()
         setState(not state)
-        local pos = switch.AbsolutePosition
-        createParticles(Vector2.new(pos.X + 24, pos.Y + 13), state and Color3.fromRGB(60, 120, 255) or Color3.fromRGB(200, 50, 50))
     end)
     
     return {
@@ -771,9 +744,6 @@ function Section:AddToggle(config)
     }
 end
 
--- ======================================================
--- SECTION:AddSlider
--- ======================================================
 function Section:AddSlider(config)
     config = config or {}
     local win = self.Window
@@ -878,9 +848,6 @@ function Section:AddSlider(config)
     }
 end
 
--- ======================================================
--- SECTION:AddDropdown
--- ======================================================
 function Section:AddDropdown(config)
     config = config or {}
     local win = self.Window
@@ -984,9 +951,6 @@ function Section:AddDropdown(config)
     }
 end
 
--- ======================================================
--- SECTION:AddTextBox
--- ======================================================
 function Section:AddTextBox(config)
     config = config or {}
     local win = self.Window
@@ -1023,7 +987,6 @@ function Section:AddTextBox(config)
     box.ClearTextOnFocus = false
     box.Parent = holder
     
-    -- Underline
     local underline = Instance.new("Frame")
     underline.Size = UDim2.new(0.5, 0, 0, 2)
     underline.Position = UDim2.new(0.5, -0.25, 1, -2)
@@ -1047,34 +1010,12 @@ function Section:AddTextBox(config)
 end
 
 -- ======================================================
--- FIX: Gán các phương thức vào prototype
+-- LIBRARY
 -- ======================================================
-Window = {}
-Window.__index = Window
-Tab = {}
-Tab.__index = Tab
-Section = {}
-Section.__index = Section
+local Library = {}
 
--- Gán các hàm vào bảng Library
-Library.Window = Window
-Library.Tab = Tab
-Library.Section = Section
-
--- Gán các phương thức vào prototypes
-function Window:AddTab(config) return self:AddTab(config) end
-function Window:ToggleMinimize() return self:ToggleMinimize() end
-function Window:ToggleMaximize() return self:ToggleMaximize() end
-function Window:ToggleVisible(visible) return self:ToggleVisible(visible) end
-function Window:Destroy() return self:Destroy() end
-function Window:Notify(config) return self:Notify(config) end
-
-function Tab:AddSection(name) return self:AddSection(name) end
-
-function Section:AddButton(config) return self:AddButton(config) end
-function Section:AddToggle(config) return self:AddToggle(config) end
-function Section:AddSlider(config) return self:AddSlider(config) end
-function Section:AddDropdown(config) return self:AddDropdown(config) end
-function Section:AddTextBox(config) return self:AddTextBox(config) end
+function Library:CreateWindow(config)
+    return Window.new(config)
+end
 
 return Library
