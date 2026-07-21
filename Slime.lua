@@ -1,7 +1,7 @@
 --[[
-    ApexUI.lua - Thư viện GUI Hiện Đại
-    Phong cách: Slime UI / Windows 11 / Discord / Apple
-    Hỗ trợ theme, gradient, animation mượt mà
+    ApexUI.lua - Thư viện GUI Hiện Đại (FIXED)
+    - Fix lỗi không hiển thị components
+    - Fix resize handle hoạt động
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -300,6 +300,7 @@ function Window.new(config)
     self.MaxWidth = 900
     self.MaxHeight = 700
     self.IsMinimized = false
+    self.TabObjects = {} -- Lưu các TabComponent
     
     -- ScreenGui
     local screenGui = Instance.new("ScreenGui")
@@ -494,39 +495,64 @@ function Window.new(config)
         end
     end)
     
-    -- === RESIZE HANDLE (Có thể kéo) ===
+    -- === RESIZE HANDLE (FIX: Có thể kéo) ===
     local resizeHandle = Instance.new("Frame")
-    resizeHandle.Size = UDim2.new(0, 20, 0, 20)
-    resizeHandle.Position = UDim2.new(1, -20, 1, -20)
+    resizeHandle.Size = UDim2.new(0, 24, 0, 24)
+    resizeHandle.Position = UDim2.new(1, -24, 1, -24)
     resizeHandle.BackgroundColor3 = theme.Accent
-    resizeHandle.BackgroundTransparency = 0.6
+    resizeHandle.BackgroundTransparency = 0.3
     resizeHandle.Parent = main
-    corner(resizeHandle, 4)
+    corner(resizeHandle, 6)
+    stroke(resizeHandle, theme.Accent, 1, 0.2)
     self.ResizeHandle = resizeHandle
     
     -- Icon resize (3 chấm)
+    local dots = {}
     for i = 0, 2 do
         for j = 0, 2 - i do
             local dot = Instance.new("Frame")
             dot.Size = UDim2.new(0, 3, 0, 3)
             dot.Position = UDim2.new(1, -6 - i * 5, 1, -6 - j * 5)
             dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            dot.BackgroundTransparency = 0.6
+            dot.BackgroundTransparency = 0.5
             dot.BorderSizePixel = 0
             dot.Parent = resizeHandle
             corner(dot, 2)
+            table.insert(dots, dot)
         end
     end
     
-    local resizeData = {}
+    -- Hover effect cho resize handle
+    resizeHandle.MouseEnter:Connect(function()
+        tween(resizeHandle, {BackgroundTransparency = 0.1}, 0.15)
+        for _, dot in ipairs(dots) do
+            tween(dot, {BackgroundTransparency = 0.2}, 0.15)
+        end
+    end)
+    resizeHandle.MouseLeave:Connect(function()
+        tween(resizeHandle, {BackgroundTransparency = 0.3}, 0.15)
+        for _, dot in ipairs(dots) do
+            tween(dot, {BackgroundTransparency = 0.5}, 0.15)
+        end
+    end)
+    
+    -- Resize logic
+    local resizeData = {
+        active = false,
+        startPos = nil,
+        startSize = nil,
+        startMainPos = nil
+    }
+    
     resizeHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             resizeData.active = true
             resizeData.startPos = input.Position
             resizeData.startSize = main.Size
-            resizeData.startPosUI = main.Position
+            resizeData.startMainPos = main.Position
         end
     end)
+    
     resizeHandle.InputEnded:Connect(function()
         resizeData.active = false
     end)
@@ -544,7 +570,22 @@ function Window.new(config)
                 self.MinHeight,
                 self.MaxHeight
             )
-            self:SetSize(newWidth, newHeight)
+            
+            -- Cập nhật kích thước và vị trí
+            main.Size = UDim2.new(0, newWidth, 0, newHeight)
+            main.Position = UDim2.new(
+                0.5, -newWidth/2,
+                0.5, -newHeight/2
+            )
+            
+            self.Width = newWidth
+            self.Height = newHeight
+            
+            -- Update shadow
+            if self.Shadow then
+                self.Shadow.Size = UDim2.new(1, 20, 1, 20)
+                self.Shadow.Position = UDim2.new(0, -10, 0, -10)
+            end
         end
     end)
     
@@ -580,6 +621,8 @@ function Window:SetAccentColor(color)
     if border then border.Color = color end
     if self.ResizeHandle then
         self.ResizeHandle.BackgroundColor3 = color
+        local stroke = self.ResizeHandle:FindFirstChild("UIStroke")
+        if stroke then stroke.Color = color end
     end
     if self.TabBar then
         self.TabBar.ScrollBarImageColor3 = color
@@ -842,6 +885,7 @@ local TabComponent = {}
 TabComponent.__index = TabComponent
 
 function Window:GetTabObject(tab)
+    -- Tạo TabComponent mới
     local obj = setmetatable({}, TabComponent)
     obj.Window = self
     obj.Page = tab.Page
